@@ -80,6 +80,56 @@ struct CleanupCommandTests {
         #expect(harness.ui.outputText.contains("would delete image X"))
     }
 
+    @Test("--runtime deletes all shutdown devices on the requested version")
+    func requestedRuntime() async throws {
+        harness.stubInventory()
+
+        try await harness.run(["cleanup", "--runtime", "18.4", "--yes"])
+
+        let deleted = try #require(harness.commandsAfterList.first?.arguments)
+        #expect(deleted.contains("DEDEDEDE-FAFA-1212-3434-565656565656"))
+    }
+
+    @Test("--runtime is repeatable")
+    func repeatableRuntime() async throws {
+        harness.stubInventory()
+
+        try await harness.run(["cleanup", "--runtime", "18.4", "--runtime", "26.0", "--yes"])
+
+        let deleted = try #require(harness.commandsAfterList.first?.arguments)
+        #expect(deleted.contains("DEDEDEDE-FAFA-1212-3434-565656565656"))
+        #expect(deleted.contains("CACACACA-1111-2222-3333-444444444444"))
+        #expect(deleted.contains("11111111-2222-3333-4444-555555555555"))
+        #expect(!deleted.contains("9EC7498F-C644-4431-8CA5-CD1432170998"))
+    }
+
+    @Test("--runtime explains when all matching devices are protected")
+    func requestedRuntimeAllProtected() async throws {
+        harness.stubInventory()
+
+        // The only watchOS 26.0 device is a pair member; the base tiers still
+        // find work, but the requested runtime itself yields nothing.
+        try await harness.run(["cleanup", "--runtime", "watchOS 26.0", "--dry-run"])
+
+        #expect(harness.ui.events.contains { event in
+            if case let .warning(message) = event {
+                return message.contains("protected")
+            }
+            return false
+        })
+    }
+
+    @Test("an unknown --runtime fails with guidance and deletes nothing")
+    func unknownRuntime() async throws {
+        harness.stubInventory()
+
+        let exit = try await harness.runExpectingExit(["cleanup", "--runtime", "99.9", "--yes"])
+
+        #expect(exit == ExitCode(1))
+        #expect(harness.ui.errorMessages.first?.contains("99.9") == true)
+        #expect(harness.commandsAfterList.isEmpty)
+    }
+
     @Test("a clean inventory reports nothing to do")
     func nothingToClean() async throws {
         harness.stubInventory(CleanFixture.json)
