@@ -361,7 +361,9 @@ public struct StatusBarOverrides: Equatable, Sendable {
 
     public init() {}
 
-    public var isEmpty: Bool { flags.isEmpty }
+    public var isEmpty: Bool {
+        flags.isEmpty
+    }
 
     public var flags: [String] {
         var result: [String] = []

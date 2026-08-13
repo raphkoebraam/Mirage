@@ -19,7 +19,9 @@ public final class MockCommandRunner: CommandRunning, Sendable {
         state.withLock(\.executed)
     }
 
-    public var lastCommand: Command? { executed.last }
+    public var lastCommand: Command? {
+        executed.last
+    }
 
     /// Queues an output. Stubs are consumed FIFO; the final stub is reused
     /// when the queue runs dry so single-stub tests stay terse.

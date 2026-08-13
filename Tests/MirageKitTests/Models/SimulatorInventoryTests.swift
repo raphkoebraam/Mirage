@@ -1,5 +1,6 @@
 import Foundation
 import MirageKit
+import MirageKitTesting
 import Testing
 
 @Suite("SimulatorInventory parsing")

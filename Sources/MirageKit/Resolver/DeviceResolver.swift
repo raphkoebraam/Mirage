@@ -124,19 +124,7 @@ public struct DeviceResolver: Sendable {
             .sorted { $0.version.compareNumerically(to: $1.version) == .orderedDescending }
 
         guard let query else {
-            guard let deviceType else {
-                throw ResolutionError.runtimeNotFound(query: nil)
-            }
-            if let supporting = available.first(where: { runtime in
-                runtime.supportedDeviceTypes?.contains { $0.identifier == deviceType.identifier } == true
-            }) {
-                return supporting
-            }
-            let platform = Self.platform(forProductFamily: deviceType.productFamily)
-            if let byPlatform = available.first(where: { $0.platform == platform }) {
-                return byPlatform
-            }
-            throw ResolutionError.runtimeNotFound(query: nil)
+            return try defaultRuntime(for: deviceType, among: available)
         }
 
         if let runtime = available.first(where: { $0.identifier == query }) {
@@ -161,6 +149,24 @@ public struct DeviceResolver: Sendable {
             }
             return byVersion[0]
         }
+    }
+
+    /// The newest available runtime for a device type: preferring runtimes
+    /// that list the type as supported, falling back to platform matching.
+    private func defaultRuntime(for deviceType: DeviceType?, among available: [SimRuntime]) throws -> SimRuntime {
+        guard let deviceType else {
+            throw ResolutionError.runtimeNotFound(query: nil)
+        }
+        if let supporting = available.first(where: { runtime in
+            runtime.supportedDeviceTypes?.contains { $0.identifier == deviceType.identifier } == true
+        }) {
+            return supporting
+        }
+        let platform = Self.platform(forProductFamily: deviceType.productFamily)
+        if let byPlatform = available.first(where: { $0.platform == platform }) {
+            return byPlatform
+        }
+        throw ResolutionError.runtimeNotFound(query: nil)
     }
 
     private static func platform(forProductFamily family: String) -> String {

@@ -61,10 +61,10 @@ public protocol CommandRunning: Sendable {
     func runInteractive(_ command: Command) throws -> Int32
 }
 
-extension CommandRunning {
+public extension CommandRunning {
     /// Runs the command and throws `CommandFailure` on a non-zero exit.
     @discardableResult
-    public func runChecked(_ command: Command) throws -> CommandOutput {
+    func runChecked(_ command: Command) throws -> CommandOutput {
         let output = try run(command)
         guard output.exitCode == 0 else {
             throw CommandFailure(

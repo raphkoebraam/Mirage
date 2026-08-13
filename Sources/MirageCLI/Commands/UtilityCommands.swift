@@ -17,7 +17,7 @@ struct GetenvCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.getenv(udid: resolved.udid, variable: variable))
+            try CLIRuntime.ui.output(simctl.getenv(udid: resolved.udid, variable: variable))
         }
     }
 }
@@ -62,7 +62,10 @@ struct LogverboseCommand: AsyncParsableCommand {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
             try simctl.logverbose(udid: resolved.udid, enabled: mode == .on)
-            CLIRuntime.ui.success("Verbose logging \(mode == .on ? "enabled" : "disabled") on \(resolved.name). Reboot the device for it to take effect.")
+            let state = mode == .on ? "enabled" : "disabled"
+            CLIRuntime.ui.success(
+                "Verbose logging \(state) on \(resolved.name). Reboot the device for it to take effect."
+            )
         }
     }
 }
@@ -249,7 +252,7 @@ struct LocationListCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.locationList(udid: resolved.udid))
+            try CLIRuntime.ui.output(simctl.locationList(udid: resolved.udid))
         }
     }
 }
@@ -299,7 +302,7 @@ struct PasteboardPasteCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.pbpaste(udid: resolved.udid))
+            try CLIRuntime.ui.output(simctl.pbpaste(udid: resolved.udid))
         }
     }
 }
@@ -469,7 +472,7 @@ struct RuntimeListCommand: AsyncParsableCommand {
 
     func run() async throws {
         try await withErrorPresentation {
-            CLIRuntime.ui.output(try CLIRuntime.simctl.runtimeList())
+            try CLIRuntime.ui.output(CLIRuntime.simctl.runtimeList())
         }
     }
 }

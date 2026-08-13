@@ -1,4 +1,5 @@
 import MirageKit
+import MirageKitTesting
 import Testing
 
 @Suite("DeviceResolver — devices")
@@ -6,7 +7,7 @@ struct DeviceResolverDeviceTests {
     let resolver: DeviceResolver
 
     init() throws {
-        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimulatorFixtures.listJSON))
+        resolver = try DeviceResolver(inventory: SimulatorInventory(json: SimulatorFixtures.listJSON))
     }
 
     @Test("'booted' resolves the single booted device")
@@ -106,7 +107,7 @@ struct DeviceResolverTypeTests {
     let resolver: DeviceResolver
 
     init() throws {
-        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimulatorFixtures.listJSON))
+        resolver = try DeviceResolver(inventory: SimulatorInventory(json: SimulatorFixtures.listJSON))
     }
 
     @Test("resolves by exact identifier")

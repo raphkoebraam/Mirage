@@ -4,6 +4,9 @@
 
 # Rules
 --disable wrapMultilineStatementBraces
+# Keep @Suite("display name") attributes on test suites.
+--disable redundantSwiftTestingSuite
+--disable swiftTestingTestCaseNames
 --enable isEmpty
 
 # Options

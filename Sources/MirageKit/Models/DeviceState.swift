@@ -34,7 +34,7 @@ public enum DeviceState: Equatable, Hashable, Sendable {
 
 extension DeviceState: Codable {
     public init(from decoder: any Decoder) throws {
-        self.init(rawValue: try decoder.singleValueContainer().decode(String.self))
+        try self.init(rawValue: decoder.singleValueContainer().decode(String.self))
     }
 
     public func encode(to encoder: any Encoder) throws {

@@ -29,7 +29,9 @@ final class RecordingUI: UserInterface, Sendable {
         self.isInteractive = isInteractive
     }
 
-    var events: [Event] { state.withLock(\.events) }
+    var events: [Event] {
+        state.withLock(\.events)
+    }
 
     /// All raw `output` text joined by newlines, for content assertions.
     var outputText: String {
@@ -57,11 +59,25 @@ final class RecordingUI: UserInterface, Sendable {
         state.withLock { $0.chooseAnswers.append(answer) }
     }
 
-    func success(_ message: String) { record(.success(message)) }
-    func info(_ message: String) { record(.info(message)) }
-    func warning(_ message: String) { record(.warning(message)) }
-    func error(_ message: String) { record(.error(message)) }
-    func output(_ text: String) { record(.output(text)) }
+    func success(_ message: String) {
+        record(.success(message))
+    }
+
+    func info(_ message: String) {
+        record(.info(message))
+    }
+
+    func warning(_ message: String) {
+        record(.warning(message))
+    }
+
+    func error(_ message: String) {
+        record(.error(message))
+    }
+
+    func output(_ text: String) {
+        record(.output(text))
+    }
 
     func table(headers: [String], rows: [[String]]) {
         record(.table(headers: headers, rows: rows))

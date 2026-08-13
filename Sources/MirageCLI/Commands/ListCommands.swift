@@ -41,7 +41,7 @@ struct ListDevicesCommand: AsyncParsableCommand {
             }
 
             if json {
-                CLIRuntime.ui.output(try prettyJSON(devices))
+                try CLIRuntime.ui.output(prettyJSON(devices))
                 return
             }
 
@@ -74,7 +74,7 @@ struct ListRuntimesCommand: AsyncParsableCommand {
             let inventory = try CLIRuntime.simctl.list()
 
             if json {
-                CLIRuntime.ui.output(try prettyJSON(inventory.runtimes))
+                try CLIRuntime.ui.output(prettyJSON(inventory.runtimes))
                 return
             }
 
@@ -103,7 +103,10 @@ struct ListDeviceTypesCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Emit JSON instead of a table.")
     var json = false
 
-    @Option(name: .long, help: "Only device types in this product family (iPhone, iPad, Apple Watch, Apple TV, Apple Vision).")
+    @Option(
+        name: .long,
+        help: "Only device types in this product family (iPhone, iPad, Apple Watch, Apple TV, Apple Vision)."
+    )
     var family: String?
 
     func run() async throws {
@@ -116,7 +119,7 @@ struct ListDeviceTypesCommand: AsyncParsableCommand {
             }
 
             if json {
-                CLIRuntime.ui.output(try prettyJSON(types))
+                try CLIRuntime.ui.output(prettyJSON(types))
                 return
             }
 
@@ -163,7 +166,7 @@ struct BootedCommand: AsyncParsableCommand {
             let booted = inventory.bootedDevices
 
             if json {
-                CLIRuntime.ui.output(try prettyJSON(booted))
+                try CLIRuntime.ui.output(prettyJSON(booted))
                 return
             }
 
@@ -190,5 +193,5 @@ func runtimeDisplayName(_ identifier: String, in inventory: SimulatorInventory) 
 func prettyJSON(_ value: some Encodable) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-    return String(decoding: try encoder.encode(value), as: UTF8.self)
+    return try String(decoding: encoder.encode(value), as: UTF8.self)
 }

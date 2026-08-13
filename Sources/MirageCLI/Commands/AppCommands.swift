@@ -156,7 +156,7 @@ struct AppListCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.listApps(udid: resolved.udid))
+            try CLIRuntime.ui.output(simctl.listApps(udid: resolved.udid))
         }
     }
 }
@@ -177,7 +177,7 @@ struct AppInfoCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.appInfo(udid: resolved.udid, bundleID: bundleID))
+            try CLIRuntime.ui.output(simctl.appInfo(udid: resolved.udid, bundleID: bundleID))
         }
     }
 }
@@ -202,8 +202,8 @@ struct AppContainerCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(
-                try simctl.appContainer(udid: resolved.udid, bundleID: bundleID, container: container)
+            try CLIRuntime.ui.output(
+                simctl.appContainer(udid: resolved.udid, bundleID: bundleID, container: container)
             )
         }
     }

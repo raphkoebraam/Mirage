@@ -35,5 +35,7 @@ public struct Device: Equatable, Sendable, Codable {
         self.availabilityError = availabilityError
     }
 
-    public var isBooted: Bool { state == .booted }
+    public var isBooted: Bool {
+        state == .booted
+    }
 }

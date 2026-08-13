@@ -205,7 +205,7 @@ struct StatusBarListCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            CLIRuntime.ui.output(try simctl.statusBarList(udid: resolved.udid))
+            try CLIRuntime.ui.output(simctl.statusBarList(udid: resolved.udid))
         }
     }
 }
@@ -281,7 +281,7 @@ private func runUIOption(option: String, device: String, value: String?) async t
             try simctl.setUIOption(udid: resolved.udid, option: option, value: value)
             CLIRuntime.ui.success("Set \(option) to \(value) on \(resolved.name).")
         } else {
-            CLIRuntime.ui.output(try simctl.uiOption(udid: resolved.udid, option: option))
+            try CLIRuntime.ui.output(simctl.uiOption(udid: resolved.udid, option: option))
         }
     }
 }

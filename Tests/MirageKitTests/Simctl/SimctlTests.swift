@@ -8,7 +8,9 @@ import Testing
 @Suite("Simctl invocations")
 struct SimctlTests {
     let runner = MockCommandRunner()
-    var simctl: Simctl { Simctl(runner: runner) }
+    var simctl: Simctl {
+        Simctl(runner: runner)
+    }
 
     private func expectLast(_ arguments: [String]) {
         #expect(runner.lastCommand == Command(executable: "/usr/bin/xcrun", arguments: ["simctl"] + arguments))

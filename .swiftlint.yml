@@ -6,6 +6,8 @@ excluded:
   - Derived
   - Tuist
   - .build
+  # Data-only JSON fixture; line length is dictated by the simctl schema.
+  - Sources/MirageKitTesting/SimulatorFixtures.swift
 
 opt_in_rules:
   - empty_count
@@ -22,6 +24,11 @@ opt_in_rules:
 
 disabled_rules:
   - todo
+  # SwiftFormat enforces trailing commas (--commas always); don't fight it.
+  - trailing_comma
+  # String(decoding:as:) is intentional for process output: lossy-but-total
+  # beats optional handling for bytes we don't control.
+  - optional_data_string_conversion
 
 line_length:
   warning: 120
@@ -32,8 +39,10 @@ identifier_name:
   min_length: 2
   allowed_symbols: ["_"]
 
+# SimctlTests holds the full argv contract (one test per subcommand) and is
+# intentionally long.
 type_body_length:
-  warning: 300
+  warning: 400
 
 file_length:
   warning: 500
