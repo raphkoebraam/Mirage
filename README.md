@@ -60,7 +60,7 @@ Requirements: macOS 15+, Xcode 26+.
 | `mirage list devicetypes` | Device types; `--family iPhone` filters. |
 | `mirage list pairs` | Watch–phone pairs. |
 | `mirage booted` | Only booted devices. |
-| `mirage create <name> [--type <t>] [--runtime <r>]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. Prints the new UDID. |
+| `mirage create <name> [--type <t>] [--runtime <r>] [--boot]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. Prints the new UDID; `--boot` boots it immediately. |
 | `mirage clone <device> <new-name>` | Clone a device; prints the new UDID. |
 | `mirage rename <device> <new-name>` | Rename. |
 | `mirage boot <device> [--wait] [--open]` | Boot; `--wait` blocks until booted, `--open` launches Simulator.app. |
@@ -78,7 +78,7 @@ Requirements: macOS 15+, Xcode 26+.
 | `mirage app uninstall <device> <bundle-id>` | Uninstall. |
 | `mirage app launch <device> <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] [-- args...]` | Launch; prints the PID. `--console` streams output. |
 | `mirage app terminate <device> <bundle-id>` | Terminate. |
-| `mirage app list <device>` | Installed apps. |
+| `mirage app list <device> [--json\|--raw]` | Installed apps as a table (user apps first), JSON, or simctl's raw plist. |
 | `mirage app info <device> <bundle-id>` | App details. |
 | `mirage app container <device> <bundle-id> [kind]` | Container path (`app`, `data`, `groups`, or a group id). |
 | `mirage app install-data <device> <path>` | Install an .xcappdata package. |
@@ -96,9 +96,9 @@ Requirements: macOS 15+, Xcode 26+.
 | Command | Description |
 |---|---|
 | `mirage open <device> <url>` | Open URLs and deep links. |
-| `mirage push <device> [bundle-id] [payload.json]` | Simulated push; payload from stdin when omitted. |
+| `mirage push <device> [bundle-id] [payload.json]` | Simulated push; payload from stdin when omitted. `--message "text"` sends a plain alert, `--json-payload '<json>'` an inline payload. |
 | `mirage privacy grant\|revoke\|reset <device> <service> [bundle-id]` | Permission control (photos, location, …, or `all`). |
-| `mirage statusbar override <device> --time 9:41 --battery-level 100 ...` | Status bar overrides; `clear` and `list` too. |
+| `mirage statusbar override <device> --time 9:41 --battery-level 100 ...` | Status bar overrides; `clear` and `list` too. `statusbar demo` applies the 9:41 App Store preset. |
 | `mirage ui appearance <device> [light\|dark]` | Get/set appearance; also `content-size`, `increase-contrast`. |
 | `mirage location set <device> <lat,lon>` | Fixed location; `clear`, `run <scenario>`, `list`. |
 | `mirage keychain add-root-cert\|add-cert\|reset <device> [path]` | Keychain manipulation. |
@@ -114,10 +114,17 @@ Requirements: macOS 15+, Xcode 26+.
 | `mirage pair <watch> <phone>` | Pair simulators (fuzzy names work); prints the pair id. |
 | `mirage unpair <pair-id>` / `mirage pair-activate <pair-id>` | Manage pairs. |
 | `mirage runtime list` / `mirage runtime delete <id\|all>` | Runtime disk images. |
+| `mirage runtime install <platform> [version]` | Download a runtime via `xcodebuild -downloadPlatform`. |
 | `mirage diagnose [--output dir] [--all-logs] [--device d...]` | Collect diagnostics. |
 | `mirage spawn <device> <executable> [-- args...]` | Run an executable on a device. |
+| `mirage logs <device> [--app name\|--predicate p] [--level l]` | Stream the device's unified log. |
+| `mirage du [--top N] [--json]` | Disk usage per runtime + biggest devices. |
+| `mirage doctor` | Environment health checks with hygiene hints. |
+| `mirage completions <zsh\|bash\|fish>` | Shell completion scripts. |
 
 ## Automation notes
+
+- **`MIRAGE_DEVICE_SET=/path`** routes every simctl call through `--set`, isolating mirage in a custom CoreSimulator device set (ideal for CI farms).
 
 - **Exit codes**: `0` success; simctl failures propagate their exit code; usage errors exit `64`.
 - **Destructive commands** (`erase`, `delete`, `keychain reset`, `runtime delete`) prompt when a TTY is present and **refuse to run without `--yes` otherwise** — CI jobs must opt in explicitly.
