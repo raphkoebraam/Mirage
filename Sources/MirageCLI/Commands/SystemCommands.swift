@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 import MirageKit
 
 struct OpenCommand: AsyncParsableCommand {
@@ -40,13 +41,50 @@ struct PushCommand: AsyncParsableCommand {
     @Argument(help: "Path to the APNS JSON payload (stdin when omitted).")
     var payload: String?
 
+    @Option(name: .long, help: "Shortcut: send a plain alert with this text (no payload file needed).")
+    var message: String?
+
+    @Option(name: .long, help: "Inline JSON payload string.")
+    var jsonPayload: String?
+
+    func validate() throws {
+        let sources = [payload != nil, message != nil, jsonPayload != nil].count(where: { $0 })
+        guard sources <= 1 else {
+            throw ValidationError("Provide at most one of: a payload file, --message, or --json-payload.")
+        }
+    }
+
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
-            try simctl.push(udid: resolved.udid, bundleID: bundleID, payloadPath: payload ?? "-")
+
+            try simctl.push(udid: resolved.udid, bundleID: bundleID, payloadPath: try resolvePayloadPath())
             CLIRuntime.ui.success("Push delivered to \(resolved.name).")
         }
+    }
+
+    private func resolvePayloadPath() throws -> String {
+        if let message {
+            let body: [String: Any] = ["aps": ["alert": message]]
+            return try writeTemporaryPayload(JSONSerialization.data(withJSONObject: body))
+        }
+        if let jsonPayload {
+            guard let data = jsonPayload.data(using: .utf8),
+                  (try? JSONSerialization.jsonObject(with: data)) != nil else {
+                throw MirageCLIError("--json-payload is not valid JSON.")
+            }
+            return try writeTemporaryPayload(data)
+        }
+        return payload ?? "-"
+    }
+
+    /// Written to the OS temp directory, which the system purges itself.
+    private func writeTemporaryPayload(_ data: Data) throws -> String {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("mirage-push-\(UUID().uuidString).json")
+        try data.write(to: url)
+        return url.path
     }
 }
 

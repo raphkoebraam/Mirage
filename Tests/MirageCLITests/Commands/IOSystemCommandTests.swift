@@ -94,6 +94,55 @@ struct SystemCommandTests {
         ])
     }
 
+    @Test("push --message builds an alert payload in a temp file")
+    func pushMessage() async throws {
+        harness.stubInventory()
+
+        try await harness.run(["push", "booted", "com.example.app", "--message", "Hello there"])
+
+        let arguments = try #require(harness.lastArguments)
+        #expect(Array(arguments.prefix(3)) == ["push", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
+
+        let payloadPath = try #require(arguments.last)
+        let payload = try String(contentsOfFile: payloadPath, encoding: .utf8)
+        #expect(payload.contains("Hello there"))
+        #expect(payload.contains("aps"))
+    }
+
+    @Test("push --json-payload validates and delivers inline JSON")
+    func pushInlineJSON() async throws {
+        harness.stubInventory()
+
+        try await harness.run([
+            "push", "booted", "com.example.app", "--json-payload", #"{"aps":{"badge":7}}"#,
+        ])
+
+        let payloadPath = try #require(harness.lastArguments?.last)
+        let payload = try String(contentsOfFile: payloadPath, encoding: .utf8)
+        #expect(payload.contains("badge"))
+    }
+
+    @Test("push rejects invalid inline JSON before touching simctl")
+    func pushInvalidJSON() async throws {
+        harness.stubInventory()
+
+        let exit = try await harness.runExpectingExit([
+            "push", "booted", "com.example.app", "--json-payload", "not json",
+        ])
+
+        #expect(exit != nil)
+        #expect(!harness.commandsAfterList.contains { $0.arguments.contains("push") })
+    }
+
+    @Test("push refuses conflicting payload sources")
+    func pushConflictingSources() async throws {
+        await #expect(throws: (any Error).self) {
+            try await harness.run([
+                "push", "booted", "com.example.app", "/tmp/p.json", "--message", "hi",
+            ])
+        }
+    }
+
     @Test("privacy grant requires a bundle id")
     func privacyGrantWithoutBundle() async throws {
         await #expect(throws: (any Error).self) {
