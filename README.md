@@ -51,76 +51,89 @@ Requirements: macOS 15+, Xcode 26+.
 
 ## Command reference
 
-### Devices
+Synopses below are exactly what `--help` prints — every option is shown.
+Each command and subcommand answers `-h/--help`; destructive ones take
+`-y/--yes` to skip confirmation. `<device>` always accepts a name, unique
+substring, UDID, UDID prefix (≥ 4 chars), or `booted`.
 
-| Command | Description |
+### Devices & lifecycle
+
+| Synopsis | Description |
 |---|---|
-| `mirage list [devices]` | Table of available devices. `--all` includes unavailable, `--name <s>` filters, `--json` for scripts. |
-| `mirage list runtimes` | Installed runtimes (`--json` supported). |
-| `mirage list devicetypes` | Device types; `--family iPhone` filters. |
+| `mirage list devices [--json] [--all] [--name <text>]` | Device table (the default for bare `mirage list`). `--all` includes unavailable devices. |
+| `mirage list runtimes [--json]` | Installed runtimes. |
+| `mirage list devicetypes [--json] [--family <family>]` | Device types; families: iPhone, iPad, Apple Watch, Apple TV, Apple Vision. |
 | `mirage list pairs` | Watch–phone pairs. |
-| `mirage booted` | Only booted devices. |
-| `mirage create <name> [--type <t>] [--runtime <r>] [--boot]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. Prints the new UDID; `--boot` boots it immediately. |
-| `mirage clone <device> <new-name>` | Clone a device; prints the new UDID. |
+| `mirage booted [--json]` | Only booted devices. |
+| `mirage create <name> [--type <type>] [--runtime <runtime>] [--boot]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. Prints the new UDID. |
+| `mirage clone <device> <new-name>` | Clone; prints the new UDID. |
 | `mirage rename <device> <new-name>` | Rename. |
 | `mirage boot <device> [--wait] [--open]` | Boot; `--wait` blocks until booted, `--open` launches Simulator.app. |
-| `mirage shutdown <device> \| --all` | Shutdown one or all. |
-| `mirage erase <device...> \| --all` | Factory reset. Asks for confirmation; `--yes` skips. |
-| `mirage delete <device...> \| --unavailable \| --all` | Delete devices. Asks for confirmation; `--yes` skips. |
+| `mirage shutdown [<device>] [--all]` | Shutdown one device or all. |
+| `mirage erase [<devices> ...] [--all] [--yes]` | Factory reset (confirmed). |
+| `mirage delete [<devices> ...] [--unavailable] [--all] [--yes]` | Delete devices, the unavailable ones, or everything (confirmed). |
 | `mirage upgrade <device> <runtime>` | Move a device to a newer runtime. |
-| `mirage cleanup [--stale-runtimes] [--runtime <v>]... [--images-not-used-since <days>] [--dry-run]` | Slim down the roster: removes unavailable devices and duplicates (keeps a booted copy, else the one with the most data); `--stale-runtimes` adds shutdown devices on non-latest runtimes; `--runtime 18.4` (repeatable; version, name, or identifier) removes all shutdown devices on that runtime; `--images-not-used-since N` prunes runtime disk images not used in N days. Shows a plan with reclaimable sizes, then confirms (`--yes` to skip). Booted devices, mid-operation devices, and watch-pair members are never touched (a warning explains skips). |
+
+### Cleanup & insight
+
+| Synopsis | Description |
+|---|---|
+| `mirage cleanup [--stale-runtimes] [--runtime <runtime> ...] [--images-not-used-since <days>] [--dry-run] [--yes]` | Tiered roster slimming: unavailable devices and duplicates always; `--stale-runtimes` adds shutdown devices on non-latest runtimes; `--runtime 18.4` (repeatable) removes everything on that version; `--images-not-used-since N` prunes runtime disk images. Reports the plan with reclaimable sizes before confirming. Booted, mid-operation, and paired devices are never touched. |
+| `mirage disk-usage [--top <n>] [--json]` | Disk usage per runtime + biggest devices; read-only. |
+| `mirage doctor` | Environment health checks with hygiene hints. |
 
 ### Apps
 
-| Command | Description |
+| Synopsis | Description |
 |---|---|
 | `mirage app install <device> <path>` | Install an .app bundle. |
 | `mirage app uninstall <device> <bundle-id>` | Uninstall. |
-| `mirage app launch <device> <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] [-- args...]` | Launch; prints the PID. `--console` streams output. |
+| `mirage app launch <device> <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] -- [<app-arguments> ...]` | Launch; prints the PID. `--console` streams output until Ctrl-C. |
 | `mirage app terminate <device> <bundle-id>` | Terminate. |
-| `mirage app list <device> [--json\|--raw]` | Installed apps as a table (user apps first), JSON, or simctl's raw plist. |
+| `mirage app list <device> [--json] [--raw]` | Installed apps as a table (user apps first), JSON, or simctl's raw plist. |
 | `mirage app info <device> <bundle-id>` | App details. |
-| `mirage app container <device> <bundle-id> [kind]` | Container path (`app`, `data`, `groups`, or a group id). |
+| `mirage app container <device> <bundle-id> [<container>]` | Container path: `app`, `data`, `groups`, or an app-group id. |
 | `mirage app install-data <device> <path>` | Install an .xcappdata package. |
 
 ### Capture & media
 
-| Command | Description |
+| Synopsis | Description |
 |---|---|
-| `mirage screenshot <device> [-o file] [--type t] [--display d] [--mask m]` | Screenshot; defaults to `<device>-<timestamp>.png`. |
-| `mirage record <device> [-o file] [--codec c] [--force]` | Record video; Ctrl-C stops and finalizes. Defaults to `.mov`. |
-| `mirage media add <device> <file...>` | Add photos/videos/contacts to the library. |
+| `mirage screenshot <device> [-o <file>] [--type <fmt>] [--display <d>] [--mask <policy>]` | Screenshot; defaults to `<device>-<timestamp>.png`. Formats: png, tiff, bmp, gif, jpeg. |
+| `mirage record <device> [-o <file>] [--codec <codec>] [--display <d>] [--mask <policy>] [--force]` | Record video until Ctrl-C; defaults to `.mov`. Codecs: hevc (default), h264. |
+| `mirage media add <device> <paths> ...` | Add photos/videos/contacts to the library. |
 
 ### System state
 
-| Command | Description |
+| Synopsis | Description |
 |---|---|
 | `mirage open <device> <url>` | Open URLs and deep links. |
-| `mirage push <device> [bundle-id] [payload.json]` | Simulated push; payload from stdin when omitted. `--message "text"` sends a plain alert, `--json-payload '<json>'` an inline payload. |
-| `mirage privacy grant\|revoke\|reset <device> <service> [bundle-id]` | Permission control (photos, location, …, or `all`). |
-| `mirage statusbar override <device> --time 9:41 --battery-level 100 ...` | Status bar overrides; `clear` and `list` too. `statusbar demo` applies the 9:41 App Store preset. |
-| `mirage ui appearance <device> [light\|dark]` | Get/set appearance; also `content-size`, `increase-contrast`. |
-| `mirage location set <device> <lat,lon>` | Fixed location; `clear`, `run <scenario>`, `list`. |
-| `mirage keychain add-root-cert\|add-cert\|reset <device> [path]` | Keychain manipulation. |
-| `mirage pasteboard copy\|paste\|sync` (alias `pb`) | Clipboard; `sync host booted` copies Mac → simulator. |
-| `mirage getenv <device> <var>` | Device environment variables. |
+| `mirage push <device> [<bundle-id>] [<payload>] [--message <text>] [--json-payload <json>]` | Simulated push: a payload file, stdin (default), a plain `--message` alert, or inline `--json-payload`. |
+| `mirage privacy <grant\|revoke\|reset> <device> <service> [<bundle-id>]` | Permission control. Services: all, calendar, contacts, contacts-limited, location, location-always, photos, photos-add, media-library, microphone, motion, reminders, siri. |
+| `mirage statusbar override <device> [--time <t>] [--data-network <n>] [--wifi-mode <m>] [--wifi-bars <0-3>] [--cellular-mode <m>] [--cellular-bars <0-4>] [--operator-name <s>] [--battery-state <s>] [--battery-level <0-100>]` | Status bar overrides (at least one flag). |
+| `mirage statusbar demo <device>` | The 9:41 App Store screenshot preset. |
+| `mirage statusbar clear <device>` / `statusbar list <device>` | Clear or list overrides. |
+| `mirage ui appearance <device> [light\|dark]` | Get/set appearance; also `ui content-size <device> [<size\|increment\|decrement>]` and `ui increase-contrast <device> [enabled\|disabled]`. |
+| `mirage location set <device> <lat,lon>` | Fixed location; also `location clear\|run <scenario>\|list`. |
+| `mirage keychain add-root-cert\|add-cert <device> <path>` | Trust certificates; `keychain reset <device> [--yes]` wipes the keychain. |
+| `mirage pasteboard copy\|paste <device>` (alias `pb`) | Clipboard in/out; `pasteboard sync <source> <destination>` where either side is a device or `host`. |
+| `mirage getenv <device> <variable>` | Device environment variables. |
 | `mirage icloud-sync <device>` | Trigger iCloud sync. |
-| `mirage logverbose <device> on\|off` | Verbose logging. |
+| `mirage logverbose <device> <on\|off>` | Verbose logging (takes effect after reboot). |
+| `mirage logs <device> [--predicate <p>] [--app <name>] [--level <default\|info\|debug>]` | Stream the unified log until Ctrl-C. |
 
-### Watch pairing, runtimes, diagnostics
+### Watch pairs, runtimes, diagnostics
 
-| Command | Description |
+| Synopsis | Description |
 |---|---|
 | `mirage pair <watch> <phone>` | Pair simulators (fuzzy names work); prints the pair id. |
-| `mirage unpair <pair-id>` / `mirage pair-activate <pair-id>` | Manage pairs. |
-| `mirage runtime list` / `mirage runtime delete <id\|all>` | Runtime disk images. |
-| `mirage runtime install <platform> [version]` | Download a runtime via `xcodebuild -downloadPlatform`. |
-| `mirage diagnose [--output dir] [--all-logs] [--device d...]` | Collect diagnostics. |
-| `mirage spawn <device> <executable> [-- args...]` | Run an executable on a device. |
-| `mirage logs <device> [--app name\|--predicate p] [--level l]` | Stream the device's unified log. |
-| `mirage du [--top N] [--json]` | Disk usage per runtime + biggest devices. |
-| `mirage doctor` | Environment health checks with hygiene hints. |
-| `mirage completions <zsh\|bash\|fish>` | Shell completion scripts. |
+| `mirage unpair <pair>` / `mirage pair-activate <pair>` | Manage pairs by UUID (see `mirage list pairs`). |
+| `mirage runtime list` | Runtime disk images. |
+| `mirage runtime install <platform> [<version>]` | Download a runtime (iOS, watchOS, tvOS, visionOS) via `xcodebuild -downloadPlatform`; latest when version omitted. |
+| `mirage runtime delete <identifier\|all> [--yes]` | Delete runtime images (confirmed). |
+| `mirage diagnose [--output <dir>] [--all-logs] [--device <d> ...]` | Collect diagnostics. |
+| `mirage spawn <device> <executable> -- [<arguments> ...]` | Run an executable on a device; exit code passes through. |
+| `mirage completions <zsh\|bash\|fish>` | Shell completion scripts (install instructions in `--help`). |
 
 ## Automation notes
 
