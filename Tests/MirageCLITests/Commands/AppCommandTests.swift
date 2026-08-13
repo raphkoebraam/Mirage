@@ -57,15 +57,60 @@ struct AppCommandTests {
         #expect(harness.lastArguments == ["terminate", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
     }
 
-    @Test("app list prints raw listapps output")
+    static let listappsSample = """
+    {
+        "com.example.myapp" =     {
+            ApplicationType = User;
+            CFBundleDisplayName = "My App";
+            CFBundleIdentifier = "com.example.myapp";
+            CFBundleVersion = "42";
+        };
+    }
+    """
+
+    @Test("app list renders a table of installed apps")
     func list() async throws {
         harness.stubInventory()
-        harness.runner.stub(stdout: "apps-plist-output")
+        harness.runner.stub(stdout: Self.listappsSample)
 
         try await harness.run(["app", "list", "booted"])
 
         #expect(harness.lastArguments == ["listapps", "9EC7498F-C644-4431-8CA5-CD1432170998"])
-        #expect(harness.ui.outputText.contains("apps-plist-output"))
+        let table = try #require(harness.ui.tables.first)
+        #expect(table.headers == ["Name", "Bundle ID", "Type", "Version"])
+        #expect(table.rows == [["My App", "com.example.myapp", "User", "42"]])
+    }
+
+    @Test("app list --json emits structured apps")
+    func listJSON() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: Self.listappsSample)
+
+        try await harness.run(["app", "list", "booted", "--json"])
+
+        #expect(harness.ui.tables.isEmpty)
+        #expect(harness.ui.outputText.contains("\"bundleID\""))
+    }
+
+    @Test("app list --raw passes simctl output through")
+    func listRaw() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "raw-plist")
+
+        try await harness.run(["app", "list", "booted", "--raw"])
+
+        #expect(harness.ui.outputText.contains("raw-plist"))
+    }
+
+    @Test("app list falls back to raw output when parsing fails")
+    func listFallback() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "not parseable {{{")
+
+        try await harness.run(["app", "list", "booted"])
+
+        #expect(harness.ui.tables.isEmpty)
+        #expect(harness.ui.outputText.contains("not parseable"))
     }
 
     @Test("app info prints raw appinfo output")

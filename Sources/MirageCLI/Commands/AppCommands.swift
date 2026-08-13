@@ -152,11 +152,46 @@ struct AppListCommand: AsyncParsableCommand {
     @Argument(help: "Device (name, UDID, prefix, or 'booted').")
     var device: String
 
+    @Flag(name: .long, help: "Emit JSON instead of a table.")
+    var json = false
+
+    @Flag(name: .long, help: "Pass simctl's raw plist output through unchanged.")
+    var raw = false
+
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
+            let ui = CLIRuntime.ui
             let resolved = try simctl.resolvedDevice(device)
-            try CLIRuntime.ui.output(simctl.listApps(udid: resolved.udid))
+            let output = try simctl.listApps(udid: resolved.udid)
+
+            if raw {
+                ui.output(output)
+                return
+            }
+
+            guard let apps = try? InstalledApp.parse(listappsOutput: output) else {
+                // New Xcode releases may change the format; degrade gracefully.
+                ui.output(output)
+                return
+            }
+
+            if json {
+                try ui.output(prettyJSON(apps))
+                return
+            }
+
+            ui.table(
+                headers: ["Name", "Bundle ID", "Type", "Version"],
+                rows: apps.map { app in
+                    [
+                        app.displayName ?? "—",
+                        app.bundleID,
+                        app.applicationType ?? "—",
+                        app.version ?? "—",
+                    ]
+                }
+            )
         }
     }
 }
