@@ -19,6 +19,7 @@ public struct Mirage: AsyncParsableCommand {
             EraseCommand.self,
             UpgradeCommand.self,
             CleanupCommand.self,
+            DuCommand.self,
             AppCommand.self,
             ScreenshotCommand.self,
             RecordCommand.self,
