@@ -148,6 +148,36 @@ public enum SimulatorFixtures {
             "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
             "state": "Shutdown",
             "name": "Test Phone"
+          },
+          {
+            "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/D0D0D0D0-AAAA-BBBB-CCCC-DDDDDDDDDDDD/data",
+            "dataPathSize": 943718400,
+            "logPath": "/Users/tester/Library/Logs/CoreSimulator/D0D0D0D0-AAAA-BBBB-CCCC-DDDDDDDDDDDD",
+            "udid": "D0D0D0D0-AAAA-BBBB-CCCC-DDDDDDDDDDDD",
+            "isAvailable": true,
+            "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "state": "Shutdown",
+            "name": "iPhone 17 Pro"
+          },
+          {
+            "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/CACACACA-1111-2222-3333-444444444444/data",
+            "dataPathSize": 524288000,
+            "logPath": "/Users/tester/Library/Logs/CoreSimulator/CACACACA-1111-2222-3333-444444444444",
+            "udid": "CACACACA-1111-2222-3333-444444444444",
+            "isAvailable": true,
+            "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "state": "Shutdown",
+            "name": "CI Runner"
+          },
+          {
+            "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/CBCBCBCB-5555-6666-7777-888888888888/data",
+            "dataPathSize": 104857600,
+            "logPath": "/Users/tester/Library/Logs/CoreSimulator/CBCBCBCB-5555-6666-7777-888888888888",
+            "udid": "CBCBCBCB-5555-6666-7777-888888888888",
+            "isAvailable": true,
+            "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "state": "Shutdown",
+            "name": "CI Runner"
           }
         ],
         "com.apple.CoreSimulator.SimRuntime.iOS-18-4": [

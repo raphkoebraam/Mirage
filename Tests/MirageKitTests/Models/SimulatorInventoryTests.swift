@@ -49,7 +49,7 @@ struct SimulatorInventoryTests {
 
     @Test("flattens devices and attaches their runtime identifier")
     func devicesAreFlattened() {
-        #expect(inventory.devices.count == 7)
+        #expect(inventory.devices.count == 10)
 
         let booted = inventory.devices.first { $0.udid == "9EC7498F-C644-4431-8CA5-CD1432170998" }
         #expect(booted?.runtimeIdentifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")
@@ -92,7 +92,7 @@ struct SimulatorInventoryTests {
 
     @Test("availableDevices excludes unavailable ones")
     func availableDevices() {
-        #expect(inventory.availableDevices.count == 6)
+        #expect(inventory.availableDevices.count == 9)
         #expect(!inventory.availableDevices.contains { $0.name == "Old iPhone" })
     }
 

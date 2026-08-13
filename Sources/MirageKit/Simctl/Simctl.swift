@@ -330,6 +330,16 @@ public struct Simctl: Sendable {
         try runner.runChecked(command(["runtime", "delete", identifier]))
     }
 
+    /// Deletes runtime disk images unused for at least `days` days.
+    /// Returns simctl's report of the affected images.
+    public func runtimeDeleteUnused(days: Int, dryRun: Bool) throws -> String {
+        var arguments = ["runtime", "delete", "--notUsedSinceDays", String(days)]
+        if dryRun {
+            arguments.append("--dry-run")
+        }
+        return try runner.runChecked(command(arguments)).standardOutput
+    }
+
     // MARK: - Helpers
 
     private func command(_ arguments: [String]) -> Command {

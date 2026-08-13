@@ -25,7 +25,7 @@ struct SimctlTests {
         let inventory = try simctl.list()
 
         expectLast(["list", "-j"])
-        #expect(inventory.devices.count == 7)
+        #expect(inventory.devices.count == 10)
     }
 
     // MARK: - Device lifecycle
@@ -433,6 +433,19 @@ struct SimctlTests {
     @Test func runtimeDelete() throws {
         try simctl.runtimeDelete(identifier: "ABC")
         expectLast(["runtime", "delete", "ABC"])
+    }
+
+    @Test("runtime delete by age supports dry runs")
+    func runtimeDeleteUnused() throws {
+        runner.stub(stdout: "deleted images\n")
+        runner.stub(stdout: "would delete\n")
+
+        _ = try simctl.runtimeDeleteUnused(days: 30, dryRun: false)
+        expectLast(["runtime", "delete", "--notUsedSinceDays", "30"])
+
+        let output = try simctl.runtimeDeleteUnused(days: 14, dryRun: true)
+        expectLast(["runtime", "delete", "--notUsedSinceDays", "14", "--dry-run"])
+        #expect(output == "would delete\n")
     }
 
     // MARK: - Failure propagation
