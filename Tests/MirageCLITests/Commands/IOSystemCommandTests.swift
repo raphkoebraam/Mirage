@@ -152,6 +152,25 @@ struct StatusBarUICommandTests {
         #expect(harness.runner.executed.isEmpty)
     }
 
+    @Test("statusbar demo applies the App Store screenshot preset")
+    func statusbarDemo() async throws {
+        harness.stubInventory()
+
+        try await harness.run(["statusbar", "demo", "booted"])
+
+        #expect(harness.lastArguments == [
+            "status_bar", "9EC7498F-C644-4431-8CA5-CD1432170998", "override",
+            "--time", "9:41",
+            "--dataNetwork", "wifi",
+            "--wifiMode", "active",
+            "--wifiBars", "3",
+            "--cellularMode", "active",
+            "--cellularBars", "4",
+            "--batteryState", "charged",
+            "--batteryLevel", "100",
+        ])
+    }
+
     @Test("statusbar clear")
     func statusbarClear() async throws {
         harness.stubInventory()

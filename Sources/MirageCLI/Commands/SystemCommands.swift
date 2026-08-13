@@ -101,6 +101,7 @@ struct StatusBarCommand: AsyncParsableCommand {
         abstract: "Override or clear status bar values.",
         subcommands: [
             StatusBarOverrideCommand.self,
+            StatusBarDemoCommand.self,
             StatusBarClearCommand.self,
             StatusBarListCommand.self,
         ]
@@ -169,6 +170,36 @@ struct StatusBarOverrideCommand: AsyncParsableCommand {
             let resolved = try simctl.resolvedDevice(device)
             try simctl.statusBarOverride(udid: resolved.udid, overrides: overrides)
             CLIRuntime.ui.success("Status bar overridden on \(resolved.name).")
+        }
+    }
+}
+
+struct StatusBarDemoCommand: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "demo",
+        abstract: "Apply the classic App Store screenshot preset (9:41, full battery and signal)."
+    )
+
+    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
+    var device: String
+
+    func run() async throws {
+        try await withErrorPresentation {
+            let simctl = CLIRuntime.simctl
+            let resolved = try simctl.resolvedDevice(device)
+
+            var overrides = StatusBarOverrides()
+            overrides.time = "9:41"
+            overrides.dataNetwork = "wifi"
+            overrides.wifiMode = "active"
+            overrides.wifiBars = 3
+            overrides.cellularMode = "active"
+            overrides.cellularBars = 4
+            overrides.batteryState = "charged"
+            overrides.batteryLevel = 100
+
+            try simctl.statusBarOverride(udid: resolved.udid, overrides: overrides)
+            CLIRuntime.ui.success("Demo status bar applied to \(resolved.name). Undo with `mirage statusbar clear`.")
         }
     }
 }
