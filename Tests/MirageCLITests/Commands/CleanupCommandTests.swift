@@ -57,23 +57,23 @@ struct CleanupCommandTests {
         #expect(deleted.contains("DEDEDEDE-FAFA-1212-3434-565656565656"))
     }
 
-    @Test("--runtimes prunes unused runtime images after device deletion")
+    @Test("--images-not-used-since prunes unused runtime images after device deletion")
     func runtimeImages() async throws {
         harness.stubInventory()
 
-        try await harness.run(["cleanup", "--runtimes", "30", "--yes"])
+        try await harness.run(["cleanup", "--images-not-used-since", "30", "--yes"])
 
         #expect(harness.commandsAfterList.first?.arguments.first == "simctl")
         #expect(harness.commandsAfterList.first?.arguments[1] == "delete")
         #expect(harness.lastArguments == ["runtime", "delete", "--notUsedSinceDays", "30"])
     }
 
-    @Test("--dry-run with --runtimes uses simctl's own dry-run")
+    @Test("--dry-run with --images-not-used-since uses simctl's own dry-run")
     func runtimeImagesDryRun() async throws {
         harness.stubInventory()
         harness.runner.stub(stdout: "would delete image X\n")
 
-        try await harness.run(["cleanup", "--runtimes", "30", "--dry-run"])
+        try await harness.run(["cleanup", "--images-not-used-since", "30", "--dry-run"])
 
         #expect(harness.commandsAfterList.count == 1)
         #expect(harness.lastArguments == ["runtime", "delete", "--notUsedSinceDays", "30", "--dry-run"])

@@ -17,8 +17,14 @@ struct CleanupCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Also remove shutdown devices on non-latest runtimes.")
     var staleRuntimes = false
 
-    @Option(name: .long, help: "Also delete runtime disk images unused for this many days.")
-    var runtimes: Int?
+    @Option(
+        name: [.customLong("images-not-used-since")],
+        help: ArgumentHelp(
+            "Also delete runtime disk images not used in this many days.",
+            valueName: "days"
+        )
+    )
+    var imagesNotUsedSince: Int?
 
     @Flag(name: .long, help: "Report what would be removed without deleting anything.")
     var dryRun = false
@@ -34,7 +40,7 @@ struct CleanupCommand: AsyncParsableCommand {
             let inventory = try simctl.list()
             let plan = CleanupPlanner(inventory: inventory).plan(includeStaleRuntimes: staleRuntimes)
 
-            if plan.isEmpty, runtimes == nil {
+            if plan.isEmpty, imagesNotUsedSince == nil {
                 ui.info("Nothing to clean up.")
                 return
             }
@@ -44,8 +50,8 @@ struct CleanupCommand: AsyncParsableCommand {
             }
 
             if dryRun {
-                if let runtimes {
-                    try ui.output(simctl.runtimeDeleteUnused(days: runtimes, dryRun: true))
+                if let imagesNotUsedSince {
+                    try ui.output(simctl.runtimeDeleteUnused(days: imagesNotUsedSince, dryRun: true))
                 }
                 return
             }
@@ -54,8 +60,8 @@ struct CleanupCommand: AsyncParsableCommand {
             if !plan.isEmpty {
                 actions.append("delete \(plan.entries.count) simulator(s)")
             }
-            if let runtimes {
-                actions.append("delete runtime images unused for \(runtimes)+ days")
+            if let imagesNotUsedSince {
+                actions.append("delete runtime images unused for \(imagesNotUsedSince)+ days")
             }
             try confirmDestructive(
                 "Proceed to \(actions.joined(separator: " and "))?",
@@ -71,12 +77,12 @@ struct CleanupCommand: AsyncParsableCommand {
                 )
             }
 
-            if let runtimes {
-                let report = try simctl.runtimeDeleteUnused(days: runtimes, dryRun: false)
+            if let imagesNotUsedSince {
+                let report = try simctl.runtimeDeleteUnused(days: imagesNotUsedSince, dryRun: false)
                 if !report.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     ui.output(report)
                 }
-                ui.success("Pruned runtime images unused for \(runtimes)+ days.")
+                ui.success("Pruned runtime images unused for \(imagesNotUsedSince)+ days.")
             }
         }
     }

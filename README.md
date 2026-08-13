@@ -68,7 +68,7 @@ Requirements: macOS 15+, Xcode 26+.
 | `mirage erase <device...> \| --all` | Factory reset. Asks for confirmation; `--yes` skips. |
 | `mirage delete <device...> \| --unavailable \| --all` | Delete devices. Asks for confirmation; `--yes` skips. |
 | `mirage upgrade <device> <runtime>` | Move a device to a newer runtime. |
-| `mirage cleanup [--stale-runtimes] [--runtimes <days>] [--dry-run]` | Slim down the roster: removes unavailable devices and duplicates (keeps a booted copy, else the one with the most data); `--stale-runtimes` adds shutdown devices on non-latest runtimes; `--runtimes N` prunes runtime images unused ≥N days. Shows a plan with reclaimable sizes, then confirms (`--yes` to skip). Booted devices and watch-pair members are never touched. |
+| `mirage cleanup [--stale-runtimes] [--images-not-used-since <days>] [--dry-run]` | Slim down the roster: removes unavailable devices and duplicates (keeps a booted copy, else the one with the most data); `--stale-runtimes` adds shutdown devices on non-latest runtimes; `--images-not-used-since N` prunes runtime disk images not used in N days. Shows a plan with reclaimable sizes, then confirms (`--yes` to skip). Booted devices and watch-pair members are never touched. |
 
 ### Apps
 
