@@ -7,7 +7,19 @@ public struct Mirage: AsyncParsableCommand {
         commandName: "mirage",
         abstract: "A humane CLI for managing Apple simulators.",
         version: MirageVersion.current,
-        subcommands: []
+        subcommands: [
+            ListCommand.self,
+            BootedCommand.self,
+            CreateCommand.self,
+            CloneCommand.self,
+            DeleteCommand.self,
+            RenameCommand.self,
+            BootCommand.self,
+            ShutdownCommand.self,
+            EraseCommand.self,
+            UpgradeCommand.self,
+        ],
+        groupedSubcommands: []
     )
 
     public init() {}

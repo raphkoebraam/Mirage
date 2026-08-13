@@ -6,7 +6,7 @@ struct DeviceResolverDeviceTests {
     let resolver: DeviceResolver
 
     init() throws {
-        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimctlListFixture.json))
+        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimulatorFixtures.listJSON))
     }
 
     @Test("'booted' resolves the single booted device")
@@ -17,7 +17,7 @@ struct DeviceResolverDeviceTests {
 
     @Test("'booted' fails when nothing is booted")
     func bootedNone() throws {
-        let inventory = try SimulatorInventory(json: SimctlListFixture.json)
+        let inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
         let shutdownAll = SimulatorInventory(
             deviceTypes: inventory.deviceTypes,
             runtimes: inventory.runtimes,
@@ -106,7 +106,7 @@ struct DeviceResolverTypeTests {
     let resolver: DeviceResolver
 
     init() throws {
-        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimctlListFixture.json))
+        resolver = DeviceResolver(inventory: try SimulatorInventory(json: SimulatorFixtures.listJSON))
     }
 
     @Test("resolves by exact identifier")
@@ -153,7 +153,7 @@ struct DeviceResolverRuntimeTests {
     let iphone17Pro: DeviceType
 
     init() throws {
-        let inventory = try SimulatorInventory(json: SimctlListFixture.json)
+        let inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
         resolver = DeviceResolver(inventory: inventory)
         iphone17Pro = inventory.deviceTypes[0]
     }

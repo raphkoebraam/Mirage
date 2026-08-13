@@ -7,7 +7,7 @@ struct SimulatorInventoryTests {
     let inventory: SimulatorInventory
 
     init() throws {
-        inventory = try SimulatorInventory(json: SimctlListFixture.json)
+        inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
     }
 
     @Test("decodes all device types with their identity fields")

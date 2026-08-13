@@ -18,7 +18,7 @@ struct SimctlTests {
 
     @Test("list requests JSON and parses the inventory")
     func list() throws {
-        runner.stub(stdout: SimctlListFixture.json)
+        runner.stub(stdout: SimulatorFixtures.listJSON)
 
         let inventory = try simctl.list()
 

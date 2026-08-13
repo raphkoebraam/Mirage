@@ -1,8 +1,8 @@
 /// Curated `simctl list -j` payload matching the Xcode 26.6 schema,
 /// including edge cases: an unavailable runtime, an unavailable device,
 /// a booted device, an unknown device state, and a watch–phone pair.
-enum SimctlListFixture {
-    static let json = """
+public enum SimulatorFixtures {
+    public static let listJSON = """
     {
       "devicetypes": [
         {
