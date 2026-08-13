@@ -157,5 +157,79 @@ struct CleanupPlannerTests {
         #expect(CleanupPlan.Reason.unavailable.description == "unavailable")
         #expect(CleanupPlan.Reason.duplicate(keptUDID: "ABCDEF12-0000").description.contains("ABCDEF12"))
         #expect(CleanupPlan.Reason.staleRuntime(newestRuntime: "iOS 26.0").description.contains("iOS 26.0"))
+        #expect(CleanupPlan.Reason.requestedRuntime(runtime: "iOS 18.4").description.contains("iOS 18.4"))
+    }
+
+    @Test("a requested runtime selects all its shutdown devices")
+    func requestedRuntime() {
+        let plan = planner.plan(runtimeIdentifiers: ["com.apple.CoreSimulator.SimRuntime.iOS-18-4"])
+
+        #expect(plan.entries.contains { entry in
+            entry.device.udid == "DEDEDEDE-FAFA-1212-3434-565656565656"
+                && entry.reason == .requestedRuntime(runtime: "iOS 18.4")
+        })
+    }
+
+    @Test("a requested runtime overrides the duplicate keep rule")
+    func requestedRuntimeOverridesKeepRule() {
+        let plan = planner.plan(runtimeIdentifiers: ["com.apple.CoreSimulator.SimRuntime.iOS-26-0"])
+
+        // CACA... is the duplicate keeper, but the user asked for the whole
+        // runtime to go — only booted devices and pair members survive.
+        #expect(plan.deletedUDIDs.contains("CACACACA-1111-2222-3333-444444444444"))
+        #expect(plan.deletedUDIDs.contains("11111111-2222-3333-4444-555555555555"))
+        #expect(plan.deletedUDIDs.contains("12121212-3434-5656-7878-909090909090"))
+        #expect(!plan.deletedUDIDs.contains("9EC7498F-C644-4431-8CA5-CD1432170998")) // booted
+        #expect(!plan.entries.contains { $0.device.name == "Fresh Device" }) // mid-creation
+    }
+
+    @Test("devices already selected keep their higher-tier reason")
+    func requestedRuntimeDoesNotReclassify() {
+        let plan = planner.plan(runtimeIdentifiers: ["com.apple.CoreSimulator.SimRuntime.iOS-26-0"])
+
+        #expect(plan.entries.contains { entry in
+            entry.device.udid == "CBCBCBCB-5555-6666-7777-888888888888"
+                && entry.reason == .duplicate(keptUDID: "CACACACA-1111-2222-3333-444444444444")
+        })
+    }
+}
+
+@Suite("SimulatorInventory runtime matching")
+struct RuntimeMatchingTests {
+    let inventory: SimulatorInventory
+
+    init() throws {
+        inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
+    }
+
+    @Test("matches by bare version across platforms")
+    func byVersion() {
+        let matches = inventory.runtimes(matching: "26.0")
+        #expect(matches.map(\.identifier).sorted() == [
+            "com.apple.CoreSimulator.SimRuntime.iOS-26-0",
+            "com.apple.CoreSimulator.SimRuntime.watchOS-26-0",
+        ])
+    }
+
+    @Test("matches by display name, case-insensitively")
+    func byName() {
+        let matches = inventory.runtimes(matching: "ios 18.4")
+        #expect(matches.map(\.identifier) == ["com.apple.CoreSimulator.SimRuntime.iOS-18-4"])
+    }
+
+    @Test("matches by identifier")
+    func byIdentifier() {
+        let matches = inventory.runtimes(matching: "com.apple.CoreSimulator.SimRuntime.iOS-18-4")
+        #expect(matches.count == 1)
+    }
+
+    @Test("never matches unavailable runtimes")
+    func excludesUnavailable() {
+        #expect(inventory.runtimes(matching: "17.0").isEmpty)
+    }
+
+    @Test("returns empty for unknown versions")
+    func unknown() {
+        #expect(inventory.runtimes(matching: "99.9").isEmpty)
     }
 }

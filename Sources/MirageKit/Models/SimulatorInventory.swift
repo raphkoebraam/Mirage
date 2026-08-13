@@ -35,6 +35,19 @@ public struct SimulatorInventory: Equatable, Sendable {
     public func deviceType(withIdentifier identifier: String) -> DeviceType? {
         deviceTypes.first { $0.identifier == identifier }
     }
+
+    /// All available runtimes matching a query: an exact identifier, a
+    /// display name (case-insensitive), or a bare version — the latter can
+    /// match several platforms (e.g. "26.0" → iOS 26.0 and watchOS 26.0).
+    public func runtimes(matching query: String) -> [SimRuntime] {
+        runtimes.filter { runtime in
+            runtime.isAvailable && (
+                runtime.identifier == query
+                    || runtime.name.caseInsensitiveCompare(query) == .orderedSame
+                    || runtime.version == query
+            )
+        }
+    }
 }
 
 extension SimulatorInventory {

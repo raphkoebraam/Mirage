@@ -18,7 +18,15 @@ public struct CleanupPlanner: Sendable {
         self.inventory = inventory
     }
 
-    public func plan(includeStaleRuntimes: Bool = false) -> CleanupPlan {
+    /// - Parameters:
+    ///   - includeStaleRuntimes: adds shutdown devices on non-latest runtimes.
+    ///   - runtimeIdentifiers: runtimes whose shutdown devices should all be
+    ///     removed (an explicit user request — the duplicate keep rule does
+    ///     not apply, but booted/pair protections still do).
+    public func plan(
+        includeStaleRuntimes: Bool = false,
+        runtimeIdentifiers: Set<String> = []
+    ) -> CleanupPlan {
         var entries: [CleanupPlan.Entry] = []
         var selected = Set<String>()
 
@@ -47,6 +55,12 @@ public struct CleanupPlanner: Sendable {
             for (device, newest) in staleDevices(among: candidates) {
                 select(device, .staleRuntime(newestRuntime: newest))
             }
+        }
+
+        for device in candidates where runtimeIdentifiers.contains(device.runtimeIdentifier) {
+            let name = inventory.runtime(withIdentifier: device.runtimeIdentifier)?.name
+                ?? device.runtimeIdentifier
+            select(device, .requestedRuntime(runtime: name))
         }
 
         return CleanupPlan(entries: entries.sorted { lhs, rhs in
@@ -129,6 +143,7 @@ public struct CleanupPlan: Equatable, Sendable {
         case unavailable
         case duplicate(keptUDID: String)
         case staleRuntime(newestRuntime: String)
+        case requestedRuntime(runtime: String)
 
         public var description: String {
             switch self {
@@ -138,6 +153,8 @@ public struct CleanupPlan: Equatable, Sendable {
                 "duplicate — keeping \(keptUDID.prefix(8))"
             case let .staleRuntime(newestRuntime):
                 "stale runtime — newest is \(newestRuntime)"
+            case let .requestedRuntime(runtime):
+                "on \(runtime) (requested)"
             }
         }
 
@@ -146,6 +163,7 @@ public struct CleanupPlan: Equatable, Sendable {
             case .unavailable: 0
             case .duplicate: 1
             case .staleRuntime: 2
+            case .requestedRuntime: 3
             }
         }
     }
