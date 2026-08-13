@@ -1,0 +1,22 @@
+# SwiftFormat configuration for mirage
+
+--swiftversion 6.0
+
+# Rules
+--disable wrapMultilineStatementBraces
+--enable isEmpty
+
+# Options
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--stripunusedargs closure-only
+--self remove
+--importgrouping testable-bottom
+--commas always
+--trimwhitespace always
+
+# Excluded paths
+--exclude Derived,Tuist/.build,.build

@@ -1,0 +1,39 @@
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - Derived
+  - Tuist
+  - .build
+
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - closure_spacing
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - first_where
+  - last_where
+  - sorted_first_last
+  - redundant_nil_coalescing
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+
+disabled_rules:
+  - todo
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+
+identifier_name:
+  min_length: 2
+  allowed_symbols: ["_"]
+
+type_body_length:
+  warning: 300
+
+file_length:
+  warning: 500
