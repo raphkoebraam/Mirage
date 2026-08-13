@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches MirageVersion
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          SOURCE_VERSION=$(sed -n 's/.*static let current = "\(.*\)".*/\1/p' \
+            Sources/MirageKit/MirageVersion.swift)
+          if [ "$TAG_VERSION" != "$SOURCE_VERSION" ]; then
+            echo "Tag $TAG_VERSION does not match MirageVersion.current ($SOURCE_VERSION)." >&2
+            exit 1
+          fi
+
+      - uses: jdx/mise-action@v2
+      - run: tuist install
+      - run: tuist generate --no-open
+
+      - name: Build universal release binary
+        run: |
+          set -o pipefail
+          xcodebuild build -workspace Mirage.xcworkspace -scheme mirage \
+            -configuration Release -destination platform=macOS \
+            -derivedDataPath build \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO | tail -20
+          lipo -info build/Build/Products/Release/mirage
+
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          cp build/Build/Products/Release/mirage dist/
+          cp README.md dist/
+          [ -f LICENSE ] && cp LICENSE dist/ || true
+          tar -czf "mirage-$VERSION-macos.tar.gz" -C dist .
+          shasum -a 256 "mirage-$VERSION-macos.tar.gz" | tee "mirage-$VERSION-macos.tar.gz.sha256"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" \
+            "mirage-$VERSION-macos.tar.gz" \
+            "mirage-$VERSION-macos.tar.gz.sha256" \
+            --title "mirage $VERSION" \
+            --generate-notes

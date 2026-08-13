@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    # Xcode 26 required: the simctl JSON schema the fixtures mirror.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned tools (tuist, swiftformat, swiftlint)
+        uses: jdx/mise-action@v2
+      - name: Resolve dependencies
+        run: tuist install
+      - name: Generate workspace
+        run: tuist generate --no-open
+      - name: MirageKit tests
+        run: |
+          set -o pipefail
+          xcodebuild test -workspace Mirage.xcworkspace -scheme MirageKitTests \
+            -destination platform=macOS -derivedDataPath build | tail -40
+      - name: MirageCLI tests
+        run: |
+          set -o pipefail
+          xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
+            -destination platform=macOS -derivedDataPath build | tail -40
+      - name: Build release binary
+        run: |
+          set -o pipefail
+          xcodebuild build -workspace Mirage.xcworkspace -scheme mirage \
+            -configuration Release -destination platform=macOS \
+            -derivedDataPath build | tail -20
+      - name: Smoke test
+        run: build/Build/Products/Release/mirage --version
+
+  lint:
+    name: Lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: SwiftFormat (lint mode)
+        run: swiftformat Sources Tests --lint
+      - name: SwiftLint
+        run: swiftlint --strict
