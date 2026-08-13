@@ -154,6 +154,9 @@ struct CreateCommand: AsyncParsableCommand {
     @Option(name: .long, help: "Runtime (version, name, or identifier). Defaults to the newest compatible one.")
     var runtime: String?
 
+    @Flag(name: .long, help: "Boot the device right after creating it.")
+    var boot = false
+
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
@@ -181,6 +184,13 @@ struct CreateCommand: AsyncParsableCommand {
 
             ui.success("Created \(name) (\(deviceType.name), \(resolvedRuntime.name)).")
             ui.output(udid)
+
+            if boot {
+                try await ui.progress("Booting \(name)", successMessage: nil) {
+                    try simctl.boot(udid: udid)
+                }
+                ui.success("Booted \(name).")
+            }
         }
     }
 }

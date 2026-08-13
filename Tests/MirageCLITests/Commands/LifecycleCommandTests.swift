@@ -130,6 +130,21 @@ struct CreateCloneDeleteRenameTests {
         #expect(harness.lastArguments?[2] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro")
     }
 
+    @Test("create --boot boots the freshly created device")
+    func createAndBoot() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "My Phone", "--type", "iphone 17 pro", "--boot"])
+
+        #expect(harness.commandsAfterList.map { Array($0.arguments.dropFirst()) } == [
+            ["create", "My Phone",
+             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+             "com.apple.CoreSimulator.SimRuntime.iOS-26-0"],
+            ["boot", "NEW-UDID"],
+        ])
+    }
+
     @Test("clone maps resolved source and new name")
     func clone() async throws {
         harness.stubInventory()
