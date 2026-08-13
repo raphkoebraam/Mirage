@@ -448,6 +448,20 @@ struct SimctlTests {
         #expect(output == "would delete\n")
     }
 
+    // MARK: - Device sets
+
+    @Test("a custom device set prefixes every invocation with --set")
+    func deviceSet() throws {
+        let isolated = Simctl(runner: runner, deviceSet: "/tmp/ci-devices")
+
+        try isolated.boot(udid: "UDID-1")
+
+        #expect(runner.lastCommand == Command(
+            executable: "/usr/bin/xcrun",
+            arguments: ["simctl", "--set", "/tmp/ci-devices", "boot", "UDID-1"]
+        ))
+    }
+
     // MARK: - Failure propagation
 
     @Test("non-zero exits surface as CommandFailure")

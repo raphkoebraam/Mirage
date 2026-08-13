@@ -17,6 +17,19 @@ struct BootShutdownEraseTests {
         #expect(!harness.ui.successMessages.isEmpty)
     }
 
+    @Test("MIRAGE_DEVICE_SET routes every simctl call through --set")
+    func deviceSet() async throws {
+        harness.stubInventory()
+
+        try await CLIRuntime.$deviceSet.withValue("/tmp/farm") {
+            try await harness.run(["boot", "Fresh Device"])
+        }
+
+        #expect(harness.lastArguments == [
+            "--set", "/tmp/farm", "boot", "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+        ])
+    }
+
     @Test("boot surfaces resolution failures as themed errors with exit code 1")
     func bootUnknownDevice() async throws {
         harness.stubInventory()

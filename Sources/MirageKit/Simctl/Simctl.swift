@@ -5,9 +5,13 @@ import Foundation
 /// (names, prefixes, "booted") happens in `DeviceResolver`, not here.
 public struct Simctl: Sendable {
     private let runner: any CommandRunning
+    private let deviceSet: String?
 
-    public init(runner: any CommandRunning = ProcessCommandRunner()) {
+    /// - Parameter deviceSet: optional path to a custom CoreSimulator device
+    ///   set (`simctl --set`), isolating all operations from the default set.
+    public init(runner: any CommandRunning = ProcessCommandRunner(), deviceSet: String? = nil) {
         self.runner = runner
+        self.deviceSet = deviceSet
     }
 
     // MARK: - Inventory
@@ -343,7 +347,8 @@ public struct Simctl: Sendable {
     // MARK: - Helpers
 
     private func command(_ arguments: [String]) -> Command {
-        Command(executable: "/usr/bin/xcrun", arguments: ["simctl"] + arguments)
+        let setPrefix = deviceSet.map { ["--set", $0] } ?? []
+        return Command(executable: "/usr/bin/xcrun", arguments: ["simctl"] + setPrefix + arguments)
     }
 
     private func trimmed(_ output: CommandOutput) -> String {
