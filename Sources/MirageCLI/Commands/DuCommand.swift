@@ -26,7 +26,7 @@ struct DuCommand: AsyncParsableCommand {
                     perRuntime: usage.perRuntime,
                     biggestDevices: usage.topDevices(top)
                 )
-                ui.output(try prettyJSON(payload))
+                try ui.output(prettyJSON(payload))
                 return
             }
 
@@ -49,7 +49,8 @@ struct DuCommand: AsyncParsableCommand {
                 }
             )
 
-            ui.info("Total simulator data: \(formatBytes(usage.totalBytes)) across \(inventory.devices.count) device(s).")
+            let total = formatBytes(usage.totalBytes)
+            ui.info("Total simulator data: \(total) across \(inventory.devices.count) device(s).")
         }
     }
 

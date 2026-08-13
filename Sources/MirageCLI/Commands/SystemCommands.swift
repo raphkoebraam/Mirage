@@ -59,7 +59,7 @@ struct PushCommand: AsyncParsableCommand {
             let simctl = CLIRuntime.simctl
             let resolved = try simctl.resolvedDevice(device)
 
-            try simctl.push(udid: resolved.udid, bundleID: bundleID, payloadPath: try resolvePayloadPath())
+            try simctl.push(udid: resolved.udid, bundleID: bundleID, payloadPath: resolvePayloadPath())
             CLIRuntime.ui.success("Push delivered to \(resolved.name).")
         }
     }

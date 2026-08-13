@@ -151,9 +151,12 @@ struct CreateCloneDeleteRenameTests {
         try await harness.run(["create", "My Phone", "--type", "iphone 17 pro", "--boot"])
 
         #expect(harness.commandsAfterList.map { Array($0.arguments.dropFirst()) } == [
-            ["create", "My Phone",
-             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
-             "com.apple.CoreSimulator.SimRuntime.iOS-26-0"],
+            [
+                "create",
+                "My Phone",
+                "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+                "com.apple.CoreSimulator.SimRuntime.iOS-26-0",
+            ],
             ["boot", "NEW-UDID"],
         ])
     }

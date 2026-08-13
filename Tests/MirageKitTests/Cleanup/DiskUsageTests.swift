@@ -7,7 +7,7 @@ struct DiskUsageTests {
     let usage: DiskUsage
 
     init() throws {
-        usage = DiskUsage(inventory: try SimulatorInventory(json: SimulatorFixtures.listJSON))
+        usage = try DiskUsage(inventory: SimulatorInventory(json: SimulatorFixtures.listJSON))
     }
 
     @Test("aggregates bytes and device counts per runtime, largest first")

@@ -54,6 +54,8 @@ public struct InstalledApp: Equatable, Sendable, Codable {
     }
 
     public struct ParsingError: Error, CustomStringConvertible {
-        public var description: String { "Could not parse the app list simctl returned." }
+        public var description: String {
+            "Could not parse the app list simctl returned."
+        }
     }
 }
