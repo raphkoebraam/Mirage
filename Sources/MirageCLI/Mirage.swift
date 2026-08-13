@@ -40,6 +40,7 @@ public struct Mirage: AsyncParsableCommand {
             SpawnCommand.self,
             DiagnoseCommand.self,
             RuntimeCommand.self,
+            CompletionsCommand.self,
         ],
         groupedSubcommands: []
     )
