@@ -155,8 +155,44 @@ The whole suite (162 tests) runs in well under a second and **never touches a
 real simulator**: tests inject a mock command runner and assert the exact
 `simctl` argv produced. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+## Contributing
+
+Questions, bug reports, feature ideas, and pull requests are all very
+welcome — and if you'd rather talk something through before writing code,
+opening an issue is never the wrong first move. Not sure whether something
+counts as a bug? Report it anyway.
+
+A few notes that will help a change land smoothly:
+
+- **The test suite is the project's favorite feature — help keep it that
+  way.** Everything runs against a mock process runner that asserts the
+  exact `simctl` arguments produced, so `mise run test` finishes in about a
+  second and never touches your simulators. A test alongside your change is
+  the best way to show what it does (and the codebase is full of examples to
+  crib from).
+- **Adding a simctl capability is easier than it looks** — there's a short
+  three-step recipe in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#extending).
+- **Formatting is automated**, so no style debates: `mise run format` before
+  committing, and `mise run lint` to double-check (tool versions are pinned,
+  nothing to configure). Option names are kebab-case; a small test will
+  remind you if one slips.
+- **Smaller commits are easier to review**, and prefixes like `feat:`,
+  `fix:`, or `docs:` are appreciated — but a good change won't be turned
+  away over commit cosmetics.
+- If your change touches the plan, a one-line update to
+  [docs/ROADMAP.md](docs/ROADMAP.md) keeps it honest.
+
+Getting set up is four commands (see Development above): `mise install`,
+`mise run generate`, `mise run build`, `mise run test`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
 ## Documentation
 
 - [Architecture & testing strategy](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Releasing](docs/RELEASING.md)
 - [Scope & analysis](docs/SCOPE.md)
 - [ADR 0001 — Adopt Noora](docs/adr/0001-adopt-noora.md)
