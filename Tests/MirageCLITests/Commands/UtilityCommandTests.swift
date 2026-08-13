@@ -202,6 +202,35 @@ struct AdvancedCommandTests {
         #expect(harness.ui.outputText == "runtime-table")
     }
 
+    @Test("runtime install downloads a platform runtime")
+    func runtimeInstall() async throws {
+        harness.runner.stubInteractive(exitCode: 0)
+
+        try await harness.run(["runtime", "install", "iOS", "26.2"])
+
+        #expect(harness.runner.lastCommand?.arguments == [
+            "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "26.2",
+        ])
+        #expect(!harness.ui.successMessages.isEmpty)
+    }
+
+    @Test("runtime install normalizes platform casing and defaults to latest")
+    func runtimeInstallLatest() async throws {
+        harness.runner.stubInteractive(exitCode: 0)
+
+        try await harness.run(["runtime", "install", "ios"])
+
+        #expect(harness.runner.lastCommand?.arguments == ["xcodebuild", "-downloadPlatform", "iOS"])
+    }
+
+    @Test("runtime install rejects unknown platforms")
+    func runtimeInstallUnknownPlatform() async throws {
+        await #expect(throws: (any Error).self) {
+            try await harness.run(["runtime", "install", "android"])
+        }
+        #expect(harness.runner.executed.isEmpty)
+    }
+
     @Test("runtime delete confirms before deleting")
     func runtimeDelete() async throws {
         harness.ui.answerConfirm(true)
