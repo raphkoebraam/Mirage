@@ -2,3 +2,38 @@
 tuist = "4.141.0"
 swiftformat = "0.60.1"
 swiftlint = "0.63.2"
+
+[tasks.generate]
+description = "Resolve dependencies and generate the Xcode workspace"
+run = "tuist install && tuist generate --no-open"
+
+[tasks.build]
+description = "Release build; binary lands in bin/mirage"
+run = """
+xcodebuild build -workspace Mirage.xcworkspace -scheme mirage \
+  -configuration Release -destination platform=macOS \
+  -derivedDataPath build -quiet
+mkdir -p bin
+cp build/Build/Products/Release/mirage bin/mirage
+echo "bin/mirage"
+"""
+
+[tasks.test]
+description = "Run both test suites"
+run = """
+xcodebuild test -workspace Mirage.xcworkspace -scheme MirageKitTests \
+  -destination platform=macOS -derivedDataPath build -quiet
+xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
+  -destination platform=macOS -derivedDataPath build -quiet
+"""
+
+[tasks.lint]
+description = "Format check and lint"
+run = """
+swiftformat Sources Tests --lint --quiet
+swiftlint --quiet
+"""
+
+[tasks.format]
+description = "Apply swiftformat"
+run = "swiftformat Sources Tests"

@@ -36,10 +36,16 @@ remaining ties are reported as ambiguous with the candidates listed —
 
 ```bash
 git clone <repo-url> && cd sim-cli
-mise install && tuist install && tuist generate --no-open
-xcodebuild build -workspace Mirage.xcworkspace -scheme mirage -configuration Release
-# binary: DerivedData/.../Release/mirage — copy it onto your PATH
+mise install          # tuist, swiftformat, swiftlint (pinned)
+mise run generate     # tuist install + tuist generate
+mise run build        # Release build → ./bin/mirage
+./bin/mirage --version
+# copy bin/mirage onto your PATH
 ```
+
+Build products stay inside the repo: DerivedData goes to `build/` (via
+`-derivedDataPath`) and the release binary is copied to `bin/mirage` —
+both git-ignored.
 
 Requirements: macOS 15+, Xcode 26+.
 
@@ -120,13 +126,21 @@ Requirements: macOS 15+, Xcode 26+.
 ## Development
 
 ```bash
-mise install                 # tuist, swiftformat, swiftlint (pinned)
-tuist install                # resolve dependencies
-tuist generate --no-open
-xcodebuild test -workspace Mirage.xcworkspace -scheme MirageKitTests -destination platform=macOS
-xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests -destination platform=macOS
-mise exec -- swiftformat Sources Tests
-mise exec -- swiftlint
+mise install          # tuist, swiftformat, swiftlint (pinned)
+mise run generate     # tuist install + tuist generate --no-open
+mise run test         # both suites, DerivedData in ./build
+mise run lint         # swiftformat --lint + swiftlint
+mise run format       # apply swiftformat
+```
+
+Regenerate (`mise run generate`) only when `Project.swift`,
+`Tuist/Package.swift`, or the dependency graph changes; iterate with
+`mise run test` or plain `xcodebuild` otherwise. To scope a run to one suite:
+
+```bash
+xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
+  -destination platform=macOS -derivedDataPath build \
+  -only-testing 'MirageCLITests/AppCommandTests'
 ```
 
 The whole suite (162 tests) runs in well under a second and **never touches a

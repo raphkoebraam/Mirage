@@ -7,6 +7,9 @@
 DerivedData/
 build/
 
+# Local build products (xcodebuild -derivedDataPath build; binary in bin/)
+bin/
+
 # Tuist
 Derived/
 .tuist-cache/
