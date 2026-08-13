@@ -75,6 +75,26 @@ enum SimctlListFixture {
         },
         {
           "isAvailable": true,
+          "version": "18.4",
+          "isInternal": false,
+          "buildversion": "22E238",
+          "supportedArchitectures": ["arm64"],
+          "supportedDeviceTypes": [
+            {
+              "bundlePath": "/Library/Developer/CoreSimulator/Profiles/DeviceTypes/iPhone 17 Pro.simdevicetype",
+              "name": "iPhone 17 Pro",
+              "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+              "productFamily": "iPhone"
+            }
+          ],
+          "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+          "platform": "iOS",
+          "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_22E238/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 18.4.simruntime",
+          "runtimeRoot": "/Library/Developer/CoreSimulator/Volumes/iOS_22E238/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 18.4.simruntime/Contents/Resources/RuntimeRoot",
+          "name": "iOS 18.4"
+        },
+        {
+          "isAvailable": true,
           "version": "26.0",
           "isInternal": false,
           "buildversion": "23R339",
@@ -118,6 +138,28 @@ enum SimctlListFixture {
             "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
             "state": "Creating",
             "name": "Fresh Device"
+          },
+          {
+            "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/12121212-3434-5656-7878-909090909090/data",
+            "dataPathSize": 13312,
+            "logPath": "/Users/tester/Library/Logs/CoreSimulator/12121212-3434-5656-7878-909090909090",
+            "udid": "12121212-3434-5656-7878-909090909090",
+            "isAvailable": true,
+            "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "state": "Shutdown",
+            "name": "Test Phone"
+          }
+        ],
+        "com.apple.CoreSimulator.SimRuntime.iOS-18-4": [
+          {
+            "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/DEDEDEDE-FAFA-1212-3434-565656565656/data",
+            "dataPathSize": 13312,
+            "logPath": "/Users/tester/Library/Logs/CoreSimulator/DEDEDEDE-FAFA-1212-3434-565656565656",
+            "udid": "DEDEDEDE-FAFA-1212-3434-565656565656",
+            "isAvailable": true,
+            "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "state": "Shutdown",
+            "name": "Test Phone"
           }
         ],
         "com.apple.CoreSimulator.SimRuntime.iOS-17-0": [

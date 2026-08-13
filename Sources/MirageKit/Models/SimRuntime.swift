@@ -6,6 +6,7 @@ public struct SimRuntime: Equatable, Sendable, Codable {
     public let buildversion: String
     public let platform: String?
     public let isAvailable: Bool
+    public let supportedDeviceTypes: [DeviceType]?
 
     public init(
         identifier: String,
@@ -13,7 +14,8 @@ public struct SimRuntime: Equatable, Sendable, Codable {
         version: String,
         buildversion: String,
         platform: String? = nil,
-        isAvailable: Bool
+        isAvailable: Bool,
+        supportedDeviceTypes: [DeviceType]? = nil
     ) {
         self.identifier = identifier
         self.name = name
@@ -21,5 +23,6 @@ public struct SimRuntime: Equatable, Sendable, Codable {
         self.buildversion = buildversion
         self.platform = platform
         self.isAvailable = isAvailable
+        self.supportedDeviceTypes = supportedDeviceTypes
     }
 }

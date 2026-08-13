@@ -23,7 +23,7 @@ struct SimctlTests {
         let inventory = try simctl.list()
 
         expectLast(["list", "-j"])
-        #expect(inventory.devices.count == 5)
+        #expect(inventory.devices.count == 7)
     }
 
     // MARK: - Device lifecycle

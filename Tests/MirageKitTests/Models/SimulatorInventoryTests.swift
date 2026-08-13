@@ -23,7 +23,7 @@ struct SimulatorInventoryTests {
 
     @Test("decodes runtimes including unavailable ones")
     func runtimes() {
-        #expect(inventory.runtimes.count == 3)
+        #expect(inventory.runtimes.count == 4)
 
         let ios26 = inventory.runtimes[0]
         #expect(ios26.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")
@@ -37,9 +37,18 @@ struct SimulatorInventoryTests {
         #expect(!ios17.isAvailable)
     }
 
+    @Test("decodes the device types each runtime supports")
+    func runtimeSupportedDeviceTypes() {
+        let ios26 = inventory.runtimes[0]
+        #expect(
+            ios26.supportedDeviceTypes?
+                .contains { $0.identifier == "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro" } == true
+        )
+    }
+
     @Test("flattens devices and attaches their runtime identifier")
     func devicesAreFlattened() {
-        #expect(inventory.devices.count == 5)
+        #expect(inventory.devices.count == 7)
 
         let booted = inventory.devices.first { $0.udid == "9EC7498F-C644-4431-8CA5-CD1432170998" }
         #expect(booted?.runtimeIdentifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")
@@ -82,7 +91,7 @@ struct SimulatorInventoryTests {
 
     @Test("availableDevices excludes unavailable ones")
     func availableDevices() {
-        #expect(inventory.availableDevices.count == 4)
+        #expect(inventory.availableDevices.count == 6)
         #expect(!inventory.availableDevices.contains { $0.name == "Old iPhone" })
     }
 
