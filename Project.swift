@@ -58,6 +58,20 @@ let project = Project(
             metadata: .metadata(tags: ["tag:layer:kit"])
         ),
         .target(
+            name: "MirageKitTesting",
+            destinations: [.mac],
+            product: .staticLibrary,
+            bundleId: "dev.mirage.MirageKitTesting",
+            deploymentTargets: deploymentTarget,
+            buildableFolders: [
+                "Sources/MirageKitTesting"
+            ],
+            dependencies: [
+                .target(name: "MirageKit")
+            ],
+            metadata: .metadata(tags: ["tag:layer:kit"])
+        ),
+        .target(
             name: "MirageKitTests",
             destinations: [.mac],
             product: .unitTests,
@@ -67,7 +81,8 @@ let project = Project(
                 "Tests/MirageKitTests"
             ],
             dependencies: [
-                .target(name: "MirageKit")
+                .target(name: "MirageKit"),
+                .target(name: "MirageKitTesting"),
             ],
             metadata: .metadata(tags: ["tag:layer:kit"])
         ),
@@ -81,7 +96,8 @@ let project = Project(
                 "Tests/MirageCLITests"
             ],
             dependencies: [
-                .target(name: "MirageCLI")
+                .target(name: "MirageCLI"),
+                .target(name: "MirageKitTesting"),
             ],
             metadata: .metadata(tags: ["tag:layer:cli"])
         ),
