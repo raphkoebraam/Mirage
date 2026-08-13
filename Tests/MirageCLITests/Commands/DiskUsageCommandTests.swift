@@ -2,15 +2,15 @@ import ArgumentParser
 import Testing
 @testable import MirageCLI
 
-@Suite("mirage du")
-struct DuCommandTests {
+@Suite("mirage disk-usage")
+struct DiskUsageCommandTests {
     let harness = CLIHarness()
 
     @Test("renders per-runtime usage and the biggest devices")
     func tables() async throws {
         harness.stubInventory()
 
-        try await harness.run(["du"])
+        try await harness.run(["disk-usage"])
 
         #expect(harness.ui.tables.count == 2)
         let runtimeTable = harness.ui.tables[0]
@@ -30,7 +30,7 @@ struct DuCommandTests {
     func top() async throws {
         harness.stubInventory()
 
-        try await harness.run(["du", "--top", "1"])
+        try await harness.run(["disk-usage", "--top", "1"])
 
         #expect(harness.ui.tables[1].rows.count == 1)
     }
@@ -39,7 +39,7 @@ struct DuCommandTests {
     func json() async throws {
         harness.stubInventory()
 
-        try await harness.run(["du", "--json"])
+        try await harness.run(["disk-usage", "--json"])
 
         #expect(harness.ui.tables.isEmpty)
         #expect(harness.ui.outputText.contains("totalBytes"))

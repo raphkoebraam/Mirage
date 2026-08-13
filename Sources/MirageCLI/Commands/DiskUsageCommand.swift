@@ -1,9 +1,9 @@
 import ArgumentParser
 import MirageKit
 
-struct DuCommand: AsyncParsableCommand {
+struct DiskUsageCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "du",
+        commandName: "disk-usage",
         abstract: "Show simulator disk usage per runtime and per device.",
         discussion: "Read-only companion to `mirage cleanup`: see where the space goes before deleting."
     )
