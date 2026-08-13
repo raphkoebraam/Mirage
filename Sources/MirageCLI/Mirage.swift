@@ -27,6 +27,18 @@ public struct Mirage: AsyncParsableCommand {
             PrivacyCommand.self,
             StatusBarCommand.self,
             UICommand.self,
+            GetenvCommand.self,
+            ICloudSyncCommand.self,
+            LogverboseCommand.self,
+            KeychainCommand.self,
+            LocationCommand.self,
+            PasteboardCommand.self,
+            PairCommand.self,
+            UnpairCommand.self,
+            PairActivateCommand.self,
+            SpawnCommand.self,
+            DiagnoseCommand.self,
+            RuntimeCommand.self,
         ],
         groupedSubcommands: []
     )
