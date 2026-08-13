@@ -1,26 +1,22 @@
-import Foundation
 import MirageKit
+import Synchronization
 
 /// Test double for `CommandRunning`: records every invocation and replays
 /// stubbed outputs in FIFO order (last stub is sticky).
-public final class MockCommandRunner: CommandRunning, @unchecked Sendable {
-    public struct UnexpectedCommand: Error, CustomStringConvertible {
-        public let command: Command
-        public var description: String { "No stub for command: \(command)" }
+public final class MockCommandRunner: CommandRunning, Sendable {
+    private struct State {
+        var executed: [Command] = []
+        var stubs: [CommandOutput] = []
+        var interactiveStubs: [Int32] = []
     }
 
-    private let lock = NSLock()
-    private var _executed: [Command] = []
-    private var stubs: [CommandOutput] = []
-    private var interactiveStubs: [Int32] = []
+    private let state = Mutex(State())
 
     public init() {}
 
     /// Every command passed to `run` or `runInteractive`, in order.
     public var executed: [Command] {
-        lock.lock()
-        defer { lock.unlock() }
-        return _executed
+        state.withLock(\.executed)
     }
 
     public var lastCommand: Command? { executed.last }
@@ -28,34 +24,32 @@ public final class MockCommandRunner: CommandRunning, @unchecked Sendable {
     /// Queues an output. Stubs are consumed FIFO; the final stub is reused
     /// when the queue runs dry so single-stub tests stay terse.
     public func stub(stdout: String = "", stderr: String = "", exitCode: Int32 = 0) {
-        lock.lock()
-        defer { lock.unlock() }
-        stubs.append(CommandOutput(standardOutput: stdout, standardError: stderr, exitCode: exitCode))
+        state.withLock {
+            $0.stubs.append(CommandOutput(standardOutput: stdout, standardError: stderr, exitCode: exitCode))
+        }
     }
 
     public func stubInteractive(exitCode: Int32 = 0) {
-        lock.lock()
-        defer { lock.unlock() }
-        interactiveStubs.append(exitCode)
+        state.withLock { $0.interactiveStubs.append(exitCode) }
     }
 
     public func run(_ command: Command) throws -> CommandOutput {
-        lock.lock()
-        defer { lock.unlock() }
-        _executed.append(command)
-        guard let first = stubs.first else {
-            return CommandOutput(standardOutput: "", standardError: "", exitCode: 0)
+        state.withLock {
+            $0.executed.append(command)
+            guard let first = $0.stubs.first else {
+                return CommandOutput(standardOutput: "", standardError: "", exitCode: 0)
+            }
+            if $0.stubs.count > 1 { $0.stubs.removeFirst() }
+            return first
         }
-        if stubs.count > 1 { stubs.removeFirst() }
-        return first
     }
 
     public func runInteractive(_ command: Command) throws -> Int32 {
-        lock.lock()
-        defer { lock.unlock() }
-        _executed.append(command)
-        guard let first = interactiveStubs.first else { return 0 }
-        if interactiveStubs.count > 1 { interactiveStubs.removeFirst() }
-        return first
+        state.withLock {
+            $0.executed.append(command)
+            guard let first = $0.interactiveStubs.first else { return 0 }
+            if $0.interactiveStubs.count > 1 { $0.interactiveStubs.removeFirst() }
+            return first
+        }
     }
 }

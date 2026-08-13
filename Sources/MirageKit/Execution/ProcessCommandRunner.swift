@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Runs commands with `Foundation.Process`, reading both output pipes
 /// concurrently so large output cannot deadlock the pipe buffers.
@@ -19,12 +20,12 @@ public struct ProcessCommandRunner: CommandRunning {
 
         // Drain stderr on a background thread while this thread drains stdout,
         // otherwise a full 64 KiB pipe buffer would block the child forever.
-        let stderrBox = Locked(Data())
+        let stderrBox = Mutex(Data())
         let group = DispatchGroup()
         group.enter()
         DispatchQueue.global(qos: .userInitiated).async {
             let data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            stderrBox.withValue { $0 = data }
+            stderrBox.withLock { $0 = data }
             group.leave()
         }
 
@@ -34,7 +35,7 @@ public struct ProcessCommandRunner: CommandRunning {
 
         return CommandOutput(
             standardOutput: String(decoding: stdoutData, as: UTF8.self),
-            standardError: String(decoding: stderrBox.withValue { $0 }, as: UTF8.self),
+            standardError: String(decoding: stderrBox.withLock { $0 }, as: UTF8.self),
             exitCode: process.terminationStatus
         )
     }
@@ -56,21 +57,5 @@ public struct ProcessCommandRunner: CommandRunning {
         try process.run()
         process.waitUntilExit()
         return process.terminationStatus
-    }
-}
-
-/// Minimal mutex-protected box used to move data across threads under Swift 6.
-final class Locked<Value>: @unchecked Sendable {
-    private var value: Value
-    private let lock = NSLock()
-
-    init(_ value: Value) {
-        self.value = value
-    }
-
-    func withValue<R>(_ body: (inout Value) -> R) -> R {
-        lock.lock()
-        defer { lock.unlock() }
-        return body(&value)
     }
 }

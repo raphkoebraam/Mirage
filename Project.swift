@@ -1,6 +1,7 @@
 import ProjectDescription
 
-let deploymentTarget: DeploymentTargets = .macOS("14.0")
+// macOS 15: floor for Xcode 26 hosts and for `Mutex` (Synchronization).
+let deploymentTarget: DeploymentTargets = .macOS("15.0")
 
 let project = Project(
     name: "Mirage",
@@ -12,7 +13,12 @@ let project = Project(
     ),
     settings: .settings(
         base: [
-            "SWIFT_VERSION": "6.0"
+            "SWIFT_VERSION": "6.0",
+            // Explicit concurrency posture: nonisolated-by-default library code
+            // (nothing here is UI-bound) with approachable-concurrency
+            // upcoming features enabled.
+            "SWIFT_DEFAULT_ACTOR_ISOLATION": "nonisolated",
+            "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
         ]
     ),
     targets: [
