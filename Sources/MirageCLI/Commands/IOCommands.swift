@@ -8,8 +8,8 @@ struct ScreenshotCommand: AsyncParsableCommand {
         abstract: "Save a screenshot of a simulator."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Option(name: [.short, .long], help: "Output file. Defaults to <device>-<timestamp>.png in the current directory.")
     var output: String?
@@ -26,7 +26,7 @@ struct ScreenshotCommand: AsyncParsableCommand {
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             let path = output ?? defaultMediaPath(deviceName: resolved.name, fileExtension: type ?? "png")
 
             try simctl.screenshot(
@@ -49,8 +49,8 @@ struct RecordCommand: AsyncParsableCommand {
         abstract: "Record a video of a simulator (Ctrl-C to stop and finalize)."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Option(name: [.short, .long], help: "Output file. Defaults to <device>-<timestamp>.mov in the current directory.")
     var output: String?
@@ -71,7 +71,7 @@ struct RecordCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let ui = CLIRuntime.ui
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             let path = output ?? defaultMediaPath(deviceName: resolved.name, fileExtension: "mov")
 
             ui.info("Recording \(resolved.name) — press Ctrl-C to stop.")

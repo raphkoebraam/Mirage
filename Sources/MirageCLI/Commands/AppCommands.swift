@@ -149,8 +149,8 @@ struct AppListCommand: AsyncParsableCommand {
         abstract: "List installed apps."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Flag(name: .long, help: "Emit JSON instead of a table.")
     var json = false
@@ -162,7 +162,7 @@ struct AppListCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let ui = CLIRuntime.ui
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             let output = try simctl.listApps(udid: resolved.udid)
 
             if raw {

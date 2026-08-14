@@ -9,8 +9,8 @@ struct LogsCommand: AsyncParsableCommand {
             + "process filter or --predicate for full NSPredicate syntax."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Option(name: .long, help: "NSPredicate filter, e.g. 'subsystem == \"com.example\"'.")
     var predicate: String?
@@ -30,7 +30,7 @@ struct LogsCommand: AsyncParsableCommand {
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
 
             var arguments = ["log", "stream"]
             if let filter = predicate ?? app.map({ "process == \"\($0)\"" }) {

@@ -152,8 +152,8 @@ struct StatusBarOverrideCommand: AsyncParsableCommand {
         abstract: "Set status bar overrides (at least one flag required)."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Option(name: .long, help: "Fixed time string (ISO dates also set the date).")
     var time: String?
@@ -205,7 +205,7 @@ struct StatusBarOverrideCommand: AsyncParsableCommand {
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.statusBarOverride(udid: resolved.udid, overrides: overrides)
             CLIRuntime.ui.success("Status bar overridden on \(resolved.name).")
         }
@@ -218,13 +218,13 @@ struct StatusBarDemoCommand: AsyncParsableCommand {
         abstract: "Apply the classic App Store screenshot preset (9:41, full battery and signal)."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
 
             var overrides = StatusBarOverrides()
             overrides.time = "9:41"
@@ -248,13 +248,13 @@ struct StatusBarClearCommand: AsyncParsableCommand {
         abstract: "Clear all status bar overrides."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.statusBarClear(udid: resolved.udid)
             CLIRuntime.ui.success("Status bar overrides cleared on \(resolved.name).")
         }
@@ -267,13 +267,13 @@ struct StatusBarListCommand: AsyncParsableCommand {
         abstract: "List current status bar overrides."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(simctl.statusBarList(udid: resolved.udid))
         }
     }
@@ -297,14 +297,11 @@ struct UIAppearanceCommand: AsyncParsableCommand {
         abstract: "Get or set light/dark appearance."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
-
-    @Argument(help: "light or dark (omit to print the current value).")
-    var value: String?
+    @Argument(help: "Optional device, optional value (light or dark): [<device>] [<value>].")
+    var arguments: [String] = []
 
     func run() async throws {
-        try await runUIOption(option: "appearance", device: device, value: value)
+        try await runUIOption(option: "appearance", knownValues: ["light", "dark"], arguments: arguments)
     }
 }
 
@@ -314,14 +311,19 @@ struct UIContentSizeCommand: AsyncParsableCommand {
         abstract: "Get or set the preferred content size category."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    static let sizes: Set<String> = [
+        "extra-small", "small", "medium", "large", "extra-large",
+        "extra-extra-large", "extra-extra-extra-large",
+        "accessibility-medium", "accessibility-large", "accessibility-extra-large",
+        "accessibility-extra-extra-large", "accessibility-extra-extra-extra-large",
+        "increment", "decrement",
+    ]
 
-    @Argument(help: "A size category, increment, or decrement (omit to print).")
-    var value: String?
+    @Argument(help: "Optional device, optional value (a size category, increment, or decrement): [<device>] [<value>].")
+    var arguments: [String] = []
 
     func run() async throws {
-        try await runUIOption(option: "content_size", device: device, value: value)
+        try await runUIOption(option: "content_size", knownValues: Self.sizes, arguments: arguments)
     }
 }
 
@@ -331,21 +333,42 @@ struct UIIncreaseContrastCommand: AsyncParsableCommand {
         abstract: "Get or set Increase Contrast mode."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
-
-    @Argument(help: "enabled or disabled (omit to print the current value).")
-    var value: String?
+    @Argument(help: "Optional device, optional value (enabled or disabled): [<device>] [<value>].")
+    var arguments: [String] = []
 
     func run() async throws {
-        try await runUIOption(option: "increase_contrast", device: device, value: value)
+        try await runUIOption(
+            option: "increase_contrast",
+            knownValues: ["enabled", "disabled"],
+            arguments: arguments
+        )
     }
 }
 
-private func runUIOption(option: String, device: String, value: String?) async throws {
+/// The ui subcommands take an optional device and an optional value, and
+/// either may be omitted: a lone argument that is a known value ("dark")
+/// targets the booted simulator; anything else is a device query (a get).
+private func runUIOption(option: String, knownValues: Set<String>, arguments: [String]) async throws {
     try await withErrorPresentation {
+        guard arguments.count <= 2 else {
+            throw MirageCLIError("Expected at most a device and a value, got: \(arguments.joined(separator: " ")).")
+        }
+
+        let deviceQuery: String?
+        let value: String?
+        switch arguments.count {
+        case 0:
+            (deviceQuery, value) = (nil, nil)
+        case 1 where knownValues.contains(arguments[0].lowercased()):
+            (deviceQuery, value) = (nil, arguments[0])
+        case 1:
+            (deviceQuery, value) = (arguments[0], nil)
+        default:
+            (deviceQuery, value) = (arguments[0], arguments[1])
+        }
+
         let simctl = CLIRuntime.simctl
-        let resolved = try simctl.resolvedDevice(device)
+        let resolved = try simctl.resolvedTarget(deviceQuery)
         if let value {
             try simctl.setUIOption(udid: resolved.udid, option: option, value: value)
             CLIRuntime.ui.success("Set \(option) to \(value) on \(resolved.name).")

@@ -262,3 +262,13 @@ public enum SimulatorFixtures {
     }
     """
 }
+
+import Foundation
+
+public extension SimulatorFixtures {
+    /// The same inventory with every device shut down — for exercising
+    /// paths that depend on nothing being booted.
+    static var allShutdownJSON: String {
+        listJSON.replacingOccurrences(of: "\"Booted\"", with: "\"Shutdown\"")
+    }
+}

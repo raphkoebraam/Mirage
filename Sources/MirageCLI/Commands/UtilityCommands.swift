@@ -28,13 +28,13 @@ struct ICloudSyncCommand: AsyncParsableCommand {
         abstract: "Trigger an iCloud sync on a device."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.icloudSync(udid: resolved.udid)
             CLIRuntime.ui.success("Triggered iCloud sync on \(resolved.name).")
         }
@@ -204,13 +204,13 @@ struct LocationClearCommand: AsyncParsableCommand {
         abstract: "Clear any simulated location."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.locationClear(udid: resolved.udid)
             CLIRuntime.ui.success("Cleared simulated location on \(resolved.name).")
         }
@@ -245,13 +245,13 @@ struct LocationListCommand: AsyncParsableCommand {
         abstract: "List available location scenarios."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(simctl.locationList(udid: resolved.udid))
         }
     }
@@ -276,13 +276,13 @@ struct PasteboardCopyCommand: AsyncParsableCommand {
         abstract: "Copy stdin onto the device pasteboard."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.pbcopy(udid: resolved.udid)
             CLIRuntime.ui.success("Copied stdin to \(resolved.name)'s pasteboard.")
         }
@@ -295,13 +295,13 @@ struct PasteboardPasteCommand: AsyncParsableCommand {
         abstract: "Print the device pasteboard."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(simctl.pbpaste(udid: resolved.udid))
         }
     }

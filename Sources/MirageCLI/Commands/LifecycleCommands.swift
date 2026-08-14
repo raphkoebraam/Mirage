@@ -63,15 +63,15 @@ struct ShutdownCommand: AsyncParsableCommand {
         abstract: "Shutdown simulators."
     )
 
-    @Argument(help: "Device name, UDID, UDID prefix, or 'booted'.")
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
     var device: String?
 
     @Flag(name: .long, help: "Shutdown every booted simulator.")
     var all = false
 
     func validate() throws {
-        guard all != (device != nil) else {
-            throw ValidationError("Provide a device or --all (not both).")
+        guard !(all && device != nil) else {
+            throw ValidationError("Provide a device or --all, not both.")
         }
     }
 
@@ -86,7 +86,7 @@ struct ShutdownCommand: AsyncParsableCommand {
                 return
             }
 
-            let resolved = try simctl.resolvedDevice(device!)
+            let resolved = try simctl.resolvedTarget(device)
             try await ui.progress("Shutting down \(resolved.name)", successMessage: nil) {
                 try simctl.shutdown(udid: resolved.udid)
             }
