@@ -2,10 +2,7 @@
 
 > Codename **Mirage** — a simulated image that behaves like the real thing.
 
-A humane, scriptable CLI for managing Apple simulators. Mirage wraps
-`xcrun simctl` with **fuzzy device resolution**, **sensible defaults**,
-**readable tables**, and **interactive prompts** — while staying fully
-automatable (`--json`, `--yes`, non-TTY fallbacks).
+Mirage is a friendly, scriptable command-line tool for Apple simulators. It sits on top of `xcrun simctl` and removes the parts that slow you down: copy-pasting UDIDs, remembering inconsistent subcommand names, and squinting at walls of text. You talk to simulators the way you think about them — by name — and Mirage works out the rest.
 
 ```console
 $ mirage boot "iphone 17 pro"        # names, not UDIDs
@@ -16,21 +13,11 @@ $ mirage list --json | jq '.[].udid' # scripting-friendly everywhere
 
 ## Why
 
-`simctl` is powerful but hostile in daily use: it wants UDIDs, its ~40
-subcommands are inconsistently named (`get_app_container`, `pbcopy`,
-`status_bar`), its output is a wall of text, and creating a device requires
-exact identifiers like `com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro`.
+`simctl` can do almost anything, but it makes you work for it. It wants exact UDIDs. Its ~40 subcommands follow three different naming conventions (`get_app_container`, `pbcopy`, `status_bar`). Creating a device means typing out identifiers like `com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro`. And when something goes wrong, the errors rarely tell you what to do instead.
 
-Mirage fixes each of those. Every `<device>` argument accepts:
+Mirage takes a different approach. Anywhere a command wants a `<device>`, you can pass a name, a unique part of a name, a UDID, the first few characters of a UDID, or simply `booted`. If your query matches several devices, Mirage prefers the booted one, then the one on the newest runtime — and if it genuinely can't decide, it shows you the candidates instead of guessing. The same forgiveness applies to runtimes: ask for `--runtime 18` and Mirage offers the closest match that your device can actually run, so you never hit simctl's bare "Incompatible device" error.
 
-- an exact **UDID** (case-insensitive) — the only way to address unavailable devices
-- a **UDID prefix** (≥ 4 characters)
-- an exact or unique-substring **name** (case-insensitive)
-- the magic word **`booted`**
-
-When several devices match, a booted one wins, then the newest runtime;
-remaining ties are reported as ambiguous with the candidates listed —
-Mirage never guesses.
+There's also a small layer of quality-of-life on top: a `cleanup` command that shows you exactly what it wants to delete (and how much disk you'll get back) before touching anything, a `disk-usage` report, a `doctor` for sanity checks, and pretty tables everywhere — with `--json` next to them whenever you'd rather pipe to `jq`.
 
 ## Installation
 
@@ -42,117 +29,41 @@ mise run build        # Release build → ./bin/mirage
 ./bin/mirage --version
 ```
 
-Then put `mirage` on your `PATH`. A symlink is best when building from
-source — every `mise run build` refreshes the installed command:
+Then put `mirage` on your `PATH`. A symlink works best when you're building from source, since every `mise run build` refreshes the installed command:
 
 ```bash
 sudo ln -sf "$PWD/bin/mirage" /usr/local/bin/mirage
 ```
 
-Prefer a stable copy instead (`sudo cp bin/mirage /usr/local/bin/`), or, to
-avoid sudo, copy it into `~/.local/bin` and add that directory to `PATH` in
-your shell profile. Verify with `which mirage && mirage --version`.
+If you'd rather have a stable copy, `sudo cp bin/mirage /usr/local/bin/` does it — or skip sudo entirely by copying the binary into `~/.local/bin` and adding that directory to `PATH` in your shell profile. Either way, `which mirage && mirage --version` confirms it worked.
 
-Build products stay inside the repo: DerivedData goes to `build/` (via
-`-derivedDataPath`) and the release binary is copied to `bin/mirage` —
-both git-ignored.
+Build products stay inside the repo: DerivedData goes to `build/` and the release binary lands in `bin/mirage`, both git-ignored. You'll need macOS 15 or newer and Xcode 26 or newer.
 
-Requirements: macOS 15+, Xcode 26+.
+## Commands
 
-## Command reference
+Mirage covers the full simctl surface — device lifecycle, apps, screenshots and video, push notifications, privacy permissions, status bar overrides, location, pasteboard, watch pairing, runtime management, log streaming — plus a few things simctl doesn't have, like `cleanup`, `disk-usage`, `doctor`, and shell completions.
 
-Synopses below are exactly what `--help` prints — every option is shown.
-Each command and subcommand answers `-h/--help`; destructive ones take
-`-y/--yes` to skip confirmation. `<device>` always accepts a name, unique
-substring, UDID, UDID prefix (≥ 4 chars), or `booted`.
+The **[command reference](docs/commands.md)** documents every command with its exact options. For a taste of the ones people reach for most:
 
-### Devices & lifecycle
+```console
+$ mirage cleanup --dry-run           # see what's safe to delete, and how much space it frees
+$ mirage app launch booted com.example.app --console
+$ mirage statusbar demo booted       # 9:41, full battery, full bars
+$ mirage push booted com.example.app --message "Hello!"
+$ mirage runtime install iOS 26.2
+```
 
-| Synopsis | Description |
-|---|---|
-| `mirage list devices [--json] [--all] [--name <text>]` | Device table (the default for bare `mirage list`). `--all` includes unavailable devices. |
-| `mirage list runtimes [--json]` | Installed runtimes. |
-| `mirage list devicetypes [--json] [--family <family>]` | Device types; families: iPhone, iPad, Apple Watch, Apple TV, Apple Vision. |
-| `mirage list pairs` | Watch–phone pairs. |
-| `mirage booted [--json]` | Only booted devices. |
-| `mirage create <name> [--type <type>] [--runtime <runtime>] [--boot] [--yes]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. A near-miss runtime ("18") offers the closest match — confirmed interactively, auto-accepted with `--yes`. Incompatible type/runtime pairs fail up front listing what works. Prints the new UDID. |
-| `mirage clone <device> <new-name>` | Clone; prints the new UDID. |
-| `mirage rename <device> <new-name>` | Rename. |
-| `mirage boot <device> [--wait] [--open]` | Boot; `--wait` blocks until booted, `--open` launches Simulator.app. |
-| `mirage shutdown [<device>] [--all]` | Shutdown one device or all. |
-| `mirage erase [<devices> ...] [--all] [--yes]` | Factory reset (confirmed). |
-| `mirage delete [<devices> ...] [--unavailable] [--all] [--yes]` | Delete devices, the unavailable ones, or everything (confirmed). |
-| `mirage upgrade <device> <runtime> [--yes]` | Move a device to a newer runtime; near-miss versions offer the closest match, incompatible pairs fail with guidance. |
+And every command answers `--help`.
 
-### Cleanup & insight
+## Scripting and automation
 
-| Synopsis | Description |
-|---|---|
-| `mirage cleanup [--stale-runtimes] [--runtime <runtime> ...] [--images-not-used-since <days>] [--dry-run] [--yes]` | Tiered roster slimming: unavailable devices and duplicates always; `--stale-runtimes` adds shutdown devices on non-latest runtimes; `--runtime 18.4` (repeatable) removes everything on that version; `--images-not-used-since N` prunes runtime disk images. Reports the plan with reclaimable sizes before confirming. Booted, mid-operation, and paired devices are never touched. |
-| `mirage disk-usage [--top <n>] [--json]` | Disk usage per runtime + biggest devices; read-only. |
-| `mirage doctor` | Environment health checks with hygiene hints. |
+Mirage is built to behave well in scripts and CI:
 
-### Apps
-
-| Synopsis | Description |
-|---|---|
-| `mirage app install <device> <path>` | Install an .app bundle. |
-| `mirage app uninstall <device> <bundle-id>` | Uninstall. |
-| `mirage app launch <device> <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] -- [<app-arguments> ...]` | Launch; prints the PID. `--console` streams output until Ctrl-C. |
-| `mirage app terminate <device> <bundle-id>` | Terminate. |
-| `mirage app list <device> [--json] [--raw]` | Installed apps as a table (user apps first), JSON, or simctl's raw plist. |
-| `mirage app info <device> <bundle-id>` | App details. |
-| `mirage app container <device> <bundle-id> [<container>]` | Container path: `app`, `data`, `groups`, or an app-group id. |
-| `mirage app install-data <device> <path>` | Install an .xcappdata package. |
-
-### Capture & media
-
-| Synopsis | Description |
-|---|---|
-| `mirage screenshot <device> [-o <file>] [--type <fmt>] [--display <d>] [--mask <policy>]` | Screenshot; defaults to `<device>-<timestamp>.png`. Formats: png, tiff, bmp, gif, jpeg. |
-| `mirage record <device> [-o <file>] [--codec <codec>] [--display <d>] [--mask <policy>] [--force]` | Record video until Ctrl-C; defaults to `.mov`. Codecs: hevc (default), h264. |
-| `mirage media add <device> <paths> ...` | Add photos/videos/contacts to the library. |
-
-### System state
-
-| Synopsis | Description |
-|---|---|
-| `mirage open <device> <url>` | Open URLs and deep links. |
-| `mirage push <device> [<bundle-id>] [<payload>] [--message <text>] [--json-payload <json>]` | Simulated push: a payload file, stdin (default), a plain `--message` alert, or inline `--json-payload`. |
-| `mirage privacy <grant\|revoke\|reset> <device> <service> [<bundle-id>]` | Permission control. Services: all, calendar, contacts, contacts-limited, location, location-always, photos, photos-add, media-library, microphone, motion, reminders, siri. |
-| `mirage statusbar override <device> [--time <t>] [--data-network <n>] [--wifi-mode <m>] [--wifi-bars <0-3>] [--cellular-mode <m>] [--cellular-bars <0-4>] [--operator-name <s>] [--battery-state <s>] [--battery-level <0-100>]` | Status bar overrides (at least one flag). |
-| `mirage statusbar demo <device>` | The 9:41 App Store screenshot preset. |
-| `mirage statusbar clear <device>` / `statusbar list <device>` | Clear or list overrides. |
-| `mirage ui appearance <device> [light\|dark]` | Get/set appearance; also `ui content-size <device> [<size\|increment\|decrement>]` and `ui increase-contrast <device> [enabled\|disabled]`. |
-| `mirage location set <device> <lat,lon>` | Fixed location; also `location clear\|run <scenario>\|list`. |
-| `mirage keychain add-root-cert\|add-cert <device> <path>` | Trust certificates; `keychain reset <device> [--yes]` wipes the keychain. |
-| `mirage pasteboard copy\|paste <device>` (alias `pb`) | Clipboard in/out; `pasteboard sync <source> <destination>` where either side is a device or `host`. |
-| `mirage getenv <device> <variable>` | Device environment variables. |
-| `mirage icloud-sync <device>` | Trigger iCloud sync. |
-| `mirage logverbose <device> <on\|off>` | Verbose logging (takes effect after reboot). |
-| `mirage logs <device> [--predicate <p>] [--app <name>] [--level <default\|info\|debug>]` | Stream the unified log until Ctrl-C. |
-
-### Watch pairs, runtimes, diagnostics
-
-| Synopsis | Description |
-|---|---|
-| `mirage pair <watch> <phone>` | Pair simulators (fuzzy names work); prints the pair id. |
-| `mirage unpair <pair>` / `mirage pair-activate <pair>` | Manage pairs by UUID (see `mirage list pairs`). |
-| `mirage runtime list` | Runtime disk images. |
-| `mirage runtime install <platform> [<version>]` | Download a runtime (iOS, watchOS, tvOS, visionOS) via `xcodebuild -downloadPlatform`; latest when version omitted. |
-| `mirage runtime delete <identifier\|all> [--yes]` | Delete runtime images (confirmed). |
-| `mirage diagnose [--output <dir>] [--all-logs] [--device <d> ...]` | Collect diagnostics. |
-| `mirage spawn <device> <executable> -- [<arguments> ...]` | Run an executable on a device; exit code passes through. |
-| `mirage completions <zsh\|bash\|fish>` | Shell completion scripts (install instructions in `--help`). |
-
-## Automation notes
-
-- **`MIRAGE_DEVICE_SET=/path`** routes every simctl call through `--set`, isolating mirage in a custom CoreSimulator device set (ideal for CI farms).
-
-- **Exit codes**: `0` success; simctl failures propagate their exit code; usage errors exit `64`.
-- **Destructive commands** (`erase`, `delete`, `keychain reset`, `runtime delete`) prompt when a TTY is present and **refuse to run without `--yes` otherwise** — CI jobs must opt in explicitly.
-- **`--json`** on listing commands emits stable, pretty-printed JSON.
-- Data outputs (UDIDs, paths, pasteboard contents) go to plain stdout; decorated alerts go through Noora and stay out of your pipes' way.
+- **Exit codes are honest**: `0` on success, simctl's own code when it fails, `64` for usage errors.
+- **Destructive commands never run unattended by accident.** `erase`, `delete`, `cleanup`, and friends ask for confirmation when a terminal is attached, and refuse to proceed without `--yes` when one isn't — so a CI job has to opt in explicitly.
+- **`--json` is available on the listing commands** and emits stable, pretty-printed output.
+- **Data goes to stdout, decoration doesn't.** UDIDs, paths, and pasteboard contents print plainly so pipes stay clean; spinners and alerts are kept out of the way.
+- **`MIRAGE_DEVICE_SET=/path`** routes every simctl call through `--set`, giving CI jobs an isolated CoreSimulator device set that never touches your personal simulators.
 
 ## Development
 
@@ -164,9 +75,7 @@ mise run lint         # swiftformat --lint + swiftlint
 mise run format       # apply swiftformat
 ```
 
-Regenerate (`mise run generate`) only when `Project.swift`,
-`Tuist/Package.swift`, or the dependency graph changes; iterate with
-`mise run test` or plain `xcodebuild` otherwise. To scope a run to one suite:
+You only need to regenerate when `Project.swift`, `Tuist/Package.swift`, or the dependency graph changes — otherwise just iterate with `mise run test`. To scope a run to a single suite:
 
 ```bash
 xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
@@ -174,41 +83,11 @@ xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
   -only-testing 'MirageCLITests/AppCommandTests'
 ```
 
-The whole suite runs in well under a second and **never touches a real
-simulator**: tests inject a mock command runner and assert the exact
-`simctl` argv produced. `CommandRunning` is the single seam that touches the
-OS; everything above it — the typed `Simctl` client, the inventory models,
-the device resolver — is pure and hermetically tested.
+The whole suite runs in well under a second and never touches a real simulator: tests inject a mock command runner and assert the exact `simctl` arguments produced. A single seam (`CommandRunning`) touches the operating system; everything above it — the typed `Simctl` client, the inventory models, the device resolver — is pure and hermetically tested.
 
 ## Contributing
 
-Questions, bug reports, feature ideas, and pull requests are all very
-welcome — and if you'd rather talk something through before writing code,
-opening an issue is never the wrong first move. Not sure whether something
-counts as a bug? Report it anyway.
-
-A few notes that will help a change land smoothly:
-
-- **The test suite is the project's favorite feature — help keep it that
-  way.** Everything runs against a mock process runner that asserts the
-  exact `simctl` arguments produced, so `mise run test` finishes in about a
-  second and never touches your simulators. A test alongside your change is
-  the best way to show what it does (and the codebase is full of examples to
-  crib from).
-- **Adding a simctl capability is easier than it looks** — three steps: a
-  `Simctl` method with an argv-contract test, a command struct with a
-  harness test, and a row in the README tables. Any existing command is a
-  template.
-- **Formatting is automated**, so no style debates: `mise run format` before
-  committing, and `mise run lint` to double-check (tool versions are pinned,
-  nothing to configure). Option names are kebab-case; a small test will
-  remind you if one slips.
-- **Smaller commits are easier to review**, and prefixes like `feat:`,
-  `fix:`, or `docs:` are appreciated — but a good change won't be turned
-  away over commit cosmetics.
-
-Getting set up is four commands (see Development above): `mise install`,
-`mise run generate`, `mise run build`, `mise run test`.
+Bug reports, feature ideas, and pull requests are all very welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** for how the project works and how to get set up. If you'd rather talk something through first, opening an issue is never the wrong move.
 
 ## License
 
