@@ -169,14 +169,51 @@ public struct DeviceResolver: Sendable {
         throw ResolutionError.runtimeNotFound(query: nil)
     }
 
-    private static func platform(forProductFamily family: String) -> String {
-        switch family {
-        case "iPhone", "iPad": "iOS"
-        case "Apple Watch": "watchOS"
-        case "Apple TV": "tvOS"
-        case "Apple Vision": "xrOS"
-        default: family
+    /// Close-but-not-exact runtime candidates for a query that
+    /// `resolveRuntime` rejected: version-family matches ("18" → every
+    /// available 18.x) and name fragments ("watch" → watchOS …). Sorted with
+    /// the device type's platform first, then newest version.
+    public func suggestRuntimes(_ query: String, for deviceType: DeviceType?) -> [SimRuntime] {
+        // A numeric query is a version search only — "1" must not match
+        // "iOS 18.4" by substring.
+        let isVersionQuery = query.split(separator: ".").allSatisfy { Int($0) != nil }
+        let matches = inventory.runtimes.filter { runtime in
+            guard runtime.isAvailable else { return false }
+            return isVersionQuery
+                ? Self.versionFamilyMatches(query: query, version: runtime.version)
+                : runtime.name.localizedCaseInsensitiveContains(query)
         }
+
+        let preferredPlatform = deviceType.map { Self.platform(forProductFamily: $0.productFamily) }
+        return matches.sorted { lhs, rhs in
+            if let preferredPlatform {
+                let lhsPreferred = lhs.platform == preferredPlatform
+                let rhsPreferred = rhs.platform == preferredPlatform
+                if lhsPreferred != rhsPreferred { return lhsPreferred }
+            }
+            switch SemanticVersion.compare(lhs.version, rhs.version) {
+            case .orderedDescending: return true
+            case .orderedAscending: return false
+            case .orderedSame: return lhs.identifier < rhs.identifier
+            }
+        }
+    }
+
+    /// "18" matches 18.x; "18.4" matches 18.4.y; "1" matches nothing —
+    /// whole leading segments only.
+    private static func versionFamilyMatches(query: String, version: String) -> Bool {
+        let querySegments = query.split(separator: ".").map { Int($0) }
+        let versionSegments = version.split(separator: ".").map { Int($0) }
+        guard !querySegments.isEmpty,
+              querySegments.count <= versionSegments.count,
+              querySegments.allSatisfy({ $0 != nil }) else {
+            return false
+        }
+        return zip(querySegments, versionSegments).allSatisfy { $0 == $1 }
+    }
+
+    private static func platform(forProductFamily family: String) -> String {
+        PlatformMapping.platform(forProductFamily: family)
     }
 }
 

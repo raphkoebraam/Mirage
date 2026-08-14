@@ -52,6 +52,12 @@ public enum SimulatorFixtures {
               "name": "iPhone 17 Pro",
               "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
               "productFamily": "iPhone"
+            },
+            {
+              "bundlePath": "/Library/Developer/CoreSimulator/Profiles/DeviceTypes/iPad Pro 13-inch (M4).simdevicetype",
+              "name": "iPad Pro 13-inch (M4)",
+              "identifier": "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4",
+              "productFamily": "iPad"
             }
           ],
           "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-26-0",
