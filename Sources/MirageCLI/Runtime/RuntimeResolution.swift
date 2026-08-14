@@ -19,22 +19,28 @@ func resolveRuntimeForgivingly(
             throw error
         }
 
+        // Distinguish a near-miss ("18" → iOS 18.0) from a compatibility
+        // redirect ("18" exists, but this device needs iOS 26+).
+        let reason = if DeviceResolver.versionFamilyMatches(query: query, version: closest.version)
+            || !query.split(separator: ".").allSatisfy({ Int($0) != nil }) {
+            "No runtime matches '\(query)'."
+        } else {
+            "No runtime matching '\(query)' can run \(deviceType?.name ?? "this device type")."
+        }
+
         if assumeYes {
-            ui.info("No runtime matches '\(query)' — using the closest, \(closest.name).")
+            ui.info("\(reason) Using the closest that works: \(closest.name).")
             return closest
         }
 
         guard ui.isInteractive else {
             throw MirageCLIError(
-                "No runtime matches '\(query)'. Closest available: \(closest.name) — "
+                "\(reason) Closest that works: \(closest.name) — "
                     + "re-run with --runtime \"\(closest.version)\"."
             )
         }
 
-        guard ui.confirm(
-            "No runtime matches '\(query)'. Use \(closest.name) instead?",
-            defaultAnswer: true
-        ) else {
+        guard ui.confirm("\(reason) Use \(closest.name) instead?", defaultAnswer: true) else {
             throw MirageCLIError("Aborted.")
         }
         return closest

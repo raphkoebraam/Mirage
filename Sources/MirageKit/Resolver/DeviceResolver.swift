@@ -171,25 +171,72 @@ public struct DeviceResolver: Sendable {
 
     /// Close-but-not-exact runtime candidates for a query that
     /// `resolveRuntime` rejected: version-family matches ("18" → every
-    /// available 18.x) and name fragments ("watch" → watchOS …). Sorted with
-    /// the device type's platform first, then newest version.
+    /// available 18.x) and name fragments ("watch" → watchOS …), ranked by
+    /// numeric closeness to the query ("18" means 18.0, so 18.0 beats 18.5).
+    ///
+    /// When a device type is given, incompatible runtimes are filtered out;
+    /// if the requested family exists but none of it can run the device,
+    /// the suggestions become the runtimes that can, closest to the query.
     public func suggestRuntimes(_ query: String, for deviceType: DeviceType?) -> [SimRuntime] {
         // A numeric query is a version search only — "1" must not match
         // "iOS 18.4" by substring.
         let isVersionQuery = query.split(separator: ".").allSatisfy { Int($0) != nil }
-        let matches = inventory.runtimes.filter { runtime in
-            guard runtime.isAvailable else { return false }
-            return isVersionQuery
-                ? Self.versionFamilyMatches(query: query, version: runtime.version)
-                : runtime.name.localizedCaseInsensitiveContains(query)
+        let available = inventory.runtimes.filter(\.isAvailable)
+
+        var matches: [SimRuntime]
+        if isVersionQuery {
+            // Widen the family until something matches: "18.3" has no 18.3.x,
+            // so fall back to the 18.x family (ranking still uses "18.3").
+            var family = query
+            repeat {
+                matches = available.filter { Self.versionFamilyMatches(query: family, version: $0.version) }
+                guard matches.isEmpty, let cut = family.lastIndex(of: ".") else { break }
+                family = String(family[..<cut])
+            } while true
+        } else {
+            matches = available.filter { $0.name.localizedCaseInsensitiveContains(query) }
         }
 
-        let preferredPlatform = deviceType.map { Self.platform(forProductFamily: $0.productFamily) }
-        return matches.sorted { lhs, rhs in
-            if let preferredPlatform {
-                let lhsPreferred = lhs.platform == preferredPlatform
-                let rhsPreferred = rhs.platform == preferredPlatform
+        guard let deviceType else {
+            return rank(matches, closestTo: isVersionQuery ? query : nil, preferring: nil)
+        }
+
+        let platform = Self.platform(forProductFamily: deviceType.productFamily)
+        let compatible = matches.filter { inventory.isCompatible(deviceType, with: $0) }
+        if !compatible.isEmpty {
+            return rank(compatible, closestTo: isVersionQuery ? query : nil, preferring: platform)
+        }
+        if !matches.isEmpty {
+            // The family the user asked for can't run this device — redirect
+            // to what can.
+            return rank(
+                inventory.runtimes(supporting: deviceType),
+                closestTo: isVersionQuery ? query : nil,
+                preferring: platform
+            )
+        }
+        return []
+    }
+
+    /// Platform preference first, then numeric distance to the query (when
+    /// one is given) or newest version, identifier as the stable tiebreak.
+    private func rank(
+        _ runtimes: [SimRuntime],
+        closestTo query: String?,
+        preferring platform: String?
+    ) -> [SimRuntime] {
+        runtimes.sorted { lhs, rhs in
+            if let platform {
+                let lhsPreferred = lhs.platform == platform
+                let rhsPreferred = rhs.platform == platform
                 if lhsPreferred != rhsPreferred { return lhsPreferred }
+            }
+            if let query {
+                let lhsDistance = SemanticVersion.distance(query, lhs.version)
+                let rhsDistance = SemanticVersion.distance(query, rhs.version)
+                if lhsDistance != rhsDistance {
+                    return lhsDistance.lexicographicallyPrecedes(rhsDistance)
+                }
             }
             switch SemanticVersion.compare(lhs.version, rhs.version) {
             case .orderedDescending: return true
@@ -201,7 +248,7 @@ public struct DeviceResolver: Sendable {
 
     /// "18" matches 18.x; "18.4" matches 18.4.y; "1" matches nothing —
     /// whole leading segments only.
-    private static func versionFamilyMatches(query: String, version: String) -> Bool {
+    public static func versionFamilyMatches(query: String, version: String) -> Bool {
         let querySegments = query.split(separator: ".").map { Int($0) }
         let versionSegments = version.split(separator: ".").map { Int($0) }
         guard !querySegments.isEmpty,

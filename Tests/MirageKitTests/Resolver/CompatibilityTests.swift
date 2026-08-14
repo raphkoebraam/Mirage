@@ -12,11 +12,39 @@ struct RuntimeSuggestionTests {
         resolver = DeviceResolver(inventory: inventory)
     }
 
-    @Test("a bare major version suggests the runtimes in that family")
+    @Test("a bare major version suggests its family, closest to the query first")
     func majorVersion() {
         let suggestions = resolver.suggestRuntimes("18", for: nil)
 
-        #expect(suggestions.map(\.name) == ["iOS 18.4"])
+        // "18" means 18.0 — the nearest version wins, not the newest.
+        #expect(suggestions.map(\.name) == ["iOS 18.0", "iOS 18.4"])
+    }
+
+    @Test("a minor version pulls its nearest neighbors first")
+    func minorVersion() {
+        let suggestions = resolver.suggestRuntimes("18.3", for: nil)
+
+        #expect(suggestions.first?.name == "iOS 18.4")
+    }
+
+    @Test("suggestions are filtered to runtimes the device type can run")
+    func compatibilityFilter() {
+        let iphone = inventory.deviceTypes[0]
+
+        let suggestions = resolver.suggestRuntimes("18", for: iphone)
+
+        #expect(suggestions.map(\.name) == ["iOS 18.0", "iOS 18.4"])
+    }
+
+    @Test("an incompatible family redirects to the closest compatible runtime")
+    func incompatibleFamilyRedirects() {
+        let ipad = inventory.deviceTypes[2]
+
+        // 18.x exists but none of it supports the iPad in this fixture —
+        // the suggestion should be what actually works.
+        let suggestions = resolver.suggestRuntimes("18", for: ipad)
+
+        #expect(suggestions.map(\.name) == ["iOS 26.0"])
     }
 
     @Test("suggestions never include unavailable runtimes")
@@ -29,14 +57,15 @@ struct RuntimeSuggestionTests {
         #expect(resolver.suggestRuntimes("1", for: nil).isEmpty)
     }
 
-    @Test("ambiguous majors prefer the device type's platform, newest first")
+    @Test("ambiguous majors resolve to the device type's own platform")
     func platformPreference() {
         let iphone = inventory.deviceTypes[0]
 
+        // "26" exists on iOS and watchOS; only the runtime the iPhone can
+        // actually run is suggested.
         let suggestions = resolver.suggestRuntimes("26", for: iphone)
 
-        #expect(suggestions.first?.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")
-        #expect(suggestions.contains { $0.platform == "watchOS" })
+        #expect(suggestions.map(\.identifier) == ["com.apple.CoreSimulator.SimRuntime.iOS-26-0"])
     }
 
     @Test("name fragments suggest too")
@@ -112,7 +141,7 @@ struct CompatibilityTests {
     @Test("runtimes(supporting:) lists newest-first compatible runtimes")
     func supportingRuntimes() {
         #expect(inventory.runtimes(supporting: ipadType).map(\.name) == ["iOS 26.0"])
-        #expect(inventory.runtimes(supporting: iphone17Pro).map(\.name) == ["iOS 26.0", "iOS 18.4"])
+        #expect(inventory.runtimes(supporting: iphone17Pro).map(\.name) == ["iOS 26.0", "iOS 18.4", "iOS 18.0"])
     }
 
     @Test("deviceTypes(supportedBy:) lists what a runtime can run")

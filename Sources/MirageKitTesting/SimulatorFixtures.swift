@@ -81,6 +81,26 @@ public enum SimulatorFixtures {
         },
         {
           "isAvailable": true,
+          "version": "18.0",
+          "isInternal": false,
+          "buildversion": "22A3351",
+          "supportedArchitectures": ["arm64"],
+          "supportedDeviceTypes": [
+            {
+              "bundlePath": "/Library/Developer/CoreSimulator/Profiles/DeviceTypes/iPhone 17 Pro.simdevicetype",
+              "name": "iPhone 17 Pro",
+              "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+              "productFamily": "iPhone"
+            }
+          ],
+          "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
+          "platform": "iOS",
+          "bundlePath": "/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 18.0.simruntime",
+          "runtimeRoot": "/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 18.0.simruntime/Contents/Resources/RuntimeRoot",
+          "name": "iOS 18.0"
+        },
+        {
+          "isAvailable": true,
           "version": "18.4",
           "isInternal": false,
           "buildversion": "22E238",

@@ -152,13 +152,13 @@ struct CreateCloneDeleteRenameTests {
         try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
 
         #expect(harness.ui.events.contains { event in
-            if case let .confirm(question) = event { return question.contains("iOS 18.4") }
+            if case let .confirm(question) = event { return question.contains("iOS 18.0") }
             return false
         })
         #expect(harness.lastArguments == [
             "create", "Test",
             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
-            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
         ])
     }
 
@@ -185,7 +185,25 @@ struct CreateCloneDeleteRenameTests {
         ])
 
         #expect(exit == ExitCode(1))
-        #expect(harness.ui.errorMessages.first?.contains("iOS 18.4") == true)
+        #expect(harness.ui.errorMessages.first?.contains("iOS 18.0") == true)
+    }
+
+    @Test("an incompatible family redirects to the closest runtime that works")
+    func createRuntimeRedirect() async throws {
+        harness.stubInventory()
+        harness.ui.answerConfirm(true)
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        // 18.x exists but cannot run the iPad in this fixture.
+        try await harness.run(["create", "Test", "--type", "ipad", "--runtime", "18"])
+
+        #expect(harness.ui.events.contains { event in
+            if case let .confirm(question) = event {
+                return question.contains("can run iPad Pro 13-inch (M4)") && question.contains("iOS 26.0")
+            }
+            return false
+        })
+        #expect(harness.lastArguments?.last == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")
     }
 
     @Test("--yes auto-accepts the closest runtime without prompting")
@@ -198,13 +216,13 @@ struct CreateCloneDeleteRenameTests {
 
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
         #expect(harness.ui.events.contains { event in
-            if case let .info(message) = event { return message.contains("iOS 18.4") }
+            if case let .info(message) = event { return message.contains("iOS 18.0") }
             return false
         })
         #expect(harness.lastArguments == [
             "create", "Test",
             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
-            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
         ])
     }
 

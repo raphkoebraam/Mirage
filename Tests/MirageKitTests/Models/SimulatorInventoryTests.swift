@@ -24,7 +24,7 @@ struct SimulatorInventoryTests {
 
     @Test("decodes runtimes including unavailable ones")
     func runtimes() {
-        #expect(inventory.runtimes.count == 4)
+        #expect(inventory.runtimes.count == 5)
 
         let ios26 = inventory.runtimes[0]
         #expect(ios26.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-0")

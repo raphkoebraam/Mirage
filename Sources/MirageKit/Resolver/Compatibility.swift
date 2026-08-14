@@ -16,6 +16,18 @@ enum SemanticVersion {
         }
         return .orderedSame
     }
+
+    /// Per-segment absolute distance, compared lexicographically:
+    /// "18" ("18.0.0") is closer to 18.3.1 ([0,3,1]) than to 18.4 ([0,4,0]).
+    static func distance(_ lhs: String, _ rhs: String) -> [Int] {
+        let lhsParts = lhs.split(separator: ".").map { Int($0) ?? 0 }
+        let rhsParts = rhs.split(separator: ".").map { Int($0) ?? 0 }
+        return (0 ..< max(lhsParts.count, rhsParts.count)).map { index in
+            let left = index < lhsParts.count ? lhsParts[index] : 0
+            let right = index < rhsParts.count ? rhsParts[index] : 0
+            return abs(left - right)
+        }
+    }
 }
 
 /// Maps simctl product families to runtime platforms.
