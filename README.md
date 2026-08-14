@@ -21,8 +21,20 @@ There's also a small layer of quality-of-life on top: a `cleanup` command that s
 
 ## Installation
 
+### With mise
+
+If you use [mise](https://mise.jdx.dev), installing Mirage is one line — it pulls the binary straight from the latest GitHub release:
+
 ```bash
-git clone <repo-url> && cd Mirage
+mise use -g "ubi:raphkoebraam/Mirage[exe=mirage]"
+```
+
+While the repository is private, mise needs a `GITHUB_TOKEN` environment variable with access to it; once Mirage is public, the command works as-is for everyone.
+
+### From source
+
+```bash
+git clone git@github.com:raphkoebraam/Mirage.git && cd Mirage
 mise install          # tuist, swiftformat, swiftlint (pinned)
 mise run generate     # tuist install + tuist generate
 mise run build        # Release build → ./bin/mirage
