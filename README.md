@@ -1,8 +1,8 @@
-# mirage
+# Mirage
 
-> Codename `mirage` — a simulated image that behaves like the real thing.
+> Codename **Mirage** — a simulated image that behaves like the real thing.
 
-A humane, scriptable CLI for managing Apple simulators. `mirage` wraps
+A humane, scriptable CLI for managing Apple simulators. Mirage wraps
 `xcrun simctl` with **fuzzy device resolution**, **sensible defaults**,
 **readable tables**, and **interactive prompts** — while staying fully
 automatable (`--json`, `--yes`, non-TTY fallbacks).
@@ -21,7 +21,7 @@ subcommands are inconsistently named (`get_app_container`, `pbcopy`,
 `status_bar`), its output is a wall of text, and creating a device requires
 exact identifiers like `com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro`.
 
-`mirage` fixes each of those. Every `<device>` argument accepts:
+Mirage fixes each of those. Every `<device>` argument accepts:
 
 - an exact **UDID** (case-insensitive) — the only way to address unavailable devices
 - a **UDID prefix** (≥ 4 characters)
@@ -30,12 +30,12 @@ exact identifiers like `com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro`.
 
 When several devices match, a booted one wins, then the newest runtime;
 remaining ties are reported as ambiguous with the candidates listed —
-`mirage` never guesses.
+Mirage never guesses.
 
 ## Installation
 
 ```bash
-git clone <repo-url> && cd sim-cli
+git clone <repo-url> && cd Mirage
 mise install          # tuist, swiftformat, swiftlint (pinned)
 mise run generate     # tuist install + tuist generate
 mise run build        # Release build → ./bin/mirage
