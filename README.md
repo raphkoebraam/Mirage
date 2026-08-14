@@ -174,9 +174,11 @@ xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
   -only-testing 'MirageCLITests/AppCommandTests'
 ```
 
-The whole suite (162 tests) runs in well under a second and **never touches a
-real simulator**: tests inject a mock command runner and assert the exact
-`simctl` argv produced. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The whole suite runs in well under a second and **never touches a real
+simulator**: tests inject a mock command runner and assert the exact
+`simctl` argv produced. `CommandRunning` is the single seam that touches the
+OS; everything above it — the typed `Simctl` client, the inventory models,
+the device resolver — is pure and hermetically tested.
 
 ## Contributing
 
@@ -193,8 +195,10 @@ A few notes that will help a change land smoothly:
   second and never touches your simulators. A test alongside your change is
   the best way to show what it does (and the codebase is full of examples to
   crib from).
-- **Adding a simctl capability is easier than it looks** — there's a short
-  three-step recipe in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#extending).
+- **Adding a simctl capability is easier than it looks** — three steps: a
+  `Simctl` method with an argv-contract test, a command struct with a
+  harness test, and a row in the README tables. Any existing command is a
+  template.
 - **Formatting is automated**, so no style debates: `mise run format` before
   committing, and `mise run lint` to double-check (tool versions are pinned,
   nothing to configure). Option names are kebab-case; a small test will
@@ -202,8 +206,6 @@ A few notes that will help a change land smoothly:
 - **Smaller commits are easier to review**, and prefixes like `feat:`,
   `fix:`, or `docs:` are appreciated — but a good change won't be turned
   away over commit cosmetics.
-- If your change touches the plan, a one-line update to
-  [docs/ROADMAP.md](docs/ROADMAP.md) keeps it honest.
 
 Getting set up is four commands (see Development above): `mise install`,
 `mise run generate`, `mise run build`, `mise run test`.
@@ -211,11 +213,3 @@ Getting set up is four commands (see Development above): `mise install`,
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Documentation
-
-- [Architecture & testing strategy](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Releasing](docs/RELEASING.md)
-- [Scope & analysis](docs/SCOPE.md)
-- [ADR 0001 — Adopt Noora](docs/adr/0001-adopt-noora.md)
