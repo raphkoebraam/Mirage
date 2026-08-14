@@ -40,8 +40,18 @@ mise install          # tuist, swiftformat, swiftlint (pinned)
 mise run generate     # tuist install + tuist generate
 mise run build        # Release build → ./bin/mirage
 ./bin/mirage --version
-# copy bin/mirage onto your PATH
 ```
+
+Then put `mirage` on your `PATH`. A symlink is best when building from
+source — every `mise run build` refreshes the installed command:
+
+```bash
+sudo ln -sf "$PWD/bin/mirage" /usr/local/bin/mirage
+```
+
+Prefer a stable copy instead (`sudo cp bin/mirage /usr/local/bin/`), or, to
+avoid sudo, copy it into `~/.local/bin` and add that directory to `PATH` in
+your shell profile. Verify with `which mirage && mirage --version`.
 
 Build products stay inside the repo: DerivedData goes to `build/` (via
 `-derivedDataPath`) and the release binary is copied to `bin/mirage` —
