@@ -232,7 +232,7 @@ mirage shutdown [<device>] [--all]
 
 Argument | Description
 --- | ---
-`<device>` | Device name, UDID, UDID prefix, or 'booted'.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `--all` | Shutdown every booted simulator.
 
 ```console
@@ -417,12 +417,12 @@ Argument | Description
 List installed apps.
 
 ```
-mirage app list <device> [--json] [--raw]
+mirage app list [<device>] [--json] [--raw]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `--json` | Emit JSON instead of a table.
 `--raw` | Pass simctl's raw plist output through unchanged.
 
@@ -481,12 +481,12 @@ Argument | Description
 Save a screenshot of a simulator.
 
 ```
-mirage screenshot <device> [--output <output>] [--type <type>] [--display <display>] [--mask <mask>]
+mirage screenshot [<device>] [--output <output>] [--type <type>] [--display <display>] [--mask <mask>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `-o, --output <output>` | Output file. Defaults to <device>-<timestamp>.png in the current directory.
 `--type <type>` | Image format: png, tiff, bmp, gif, jpeg.
 `--display <display>` | Display to capture (see `simctl io enumerate`).
@@ -502,12 +502,12 @@ $ mirage screenshot booted -o shot.jpeg --type jpeg
 Record a video of a simulator (Ctrl-C to stop and finalize).
 
 ```
-mirage record <device> [--output <output>] [--codec <codec>] [--display <display>] [--mask <mask>] [--force]
+mirage record [<device>] [--output <output>] [--codec <codec>] [--display <display>] [--mask <mask>] [--force]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `-o, --output <output>` | Output file. Defaults to <device>-<timestamp>.mov in the current directory.
 `--codec <codec>` | Codec: h264 or hevc (default).
 `--display <display>` | Display to record (see `simctl io enumerate`).
@@ -600,12 +600,12 @@ $ mirage privacy reset booted all
 Set status bar overrides (at least one flag required).
 
 ```
-mirage statusbar override <device> [--time <time>] [--data-network <data-network>] [--wifi-mode <wifi-mode>] [--wifi-bars <wifi-bars>] [--cellular-mode <cellular-mode>] [--cellular-bars <cellular-bars>] [--operator-name <operator-name>] [--battery-state <battery-state>] [--battery-level <battery-level>]
+mirage statusbar override [<device>] [--time <time>] [--data-network <data-network>] [--wifi-mode <wifi-mode>] [--wifi-bars <wifi-bars>] [--cellular-mode <cellular-mode>] [--cellular-bars <cellular-bars>] [--operator-name <operator-name>] [--battery-state <battery-state>] [--battery-level <battery-level>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `--time <time>` | Fixed time string (ISO dates also set the date).
 `--data-network <data-network>` | hide, wifi, 3g, 4g, lte, lte-a, lte+, 5g, 5g+, 5g-uwb, 5g-uc.
 `--wifi-mode <wifi-mode>` | searching, failed, or active.
@@ -625,12 +625,12 @@ $ mirage statusbar override booted --time "9:41" --battery-level 100
 Apply the classic App Store screenshot preset (9:41, full battery and signal).
 
 ```
-mirage statusbar demo <device>
+mirage statusbar demo [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ```console
 $ mirage statusbar demo booted
@@ -641,37 +641,36 @@ $ mirage statusbar demo booted
 Clear all status bar overrides.
 
 ```
-mirage statusbar clear <device>
+mirage statusbar clear [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## statusbar list
 
 List current status bar overrides.
 
 ```
-mirage statusbar list <device>
+mirage statusbar list [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## ui appearance
 
 Get or set light/dark appearance.
 
 ```
-mirage ui appearance <device> [<value>]
+mirage ui appearance [<arguments> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<value>` | light or dark (omit to print the current value).
+`<arguments>` | Optional device, optional value (light or dark): [<device>] [<value>].
 
 ```console
 $ mirage ui appearance booted dark
@@ -682,26 +681,24 @@ $ mirage ui appearance booted dark
 Get or set the preferred content size category.
 
 ```
-mirage ui content-size <device> [<value>]
+mirage ui content-size [<arguments> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<value>` | A size category, increment, or decrement (omit to print).
+`<arguments>` | Optional device, optional value (a size category, increment, or decrement): [<device>] [<value>].
 
 ## ui increase-contrast
 
 Get or set Increase Contrast mode.
 
 ```
-mirage ui increase-contrast <device> [<value>]
+mirage ui increase-contrast [<arguments> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<value>` | enabled or disabled (omit to print the current value).
+`<arguments>` | Optional device, optional value (enabled or disabled): [<device>] [<value>].
 
 ## location set
 
@@ -725,12 +722,12 @@ $ mirage location set booted 37.3349,-122.009
 Clear any simulated location.
 
 ```
-mirage location clear <device>
+mirage location clear [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## location run
 
@@ -750,12 +747,12 @@ Argument | Description
 List available location scenarios.
 
 ```
-mirage location list <device>
+mirage location list [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## keychain add-root-cert
 
@@ -801,24 +798,24 @@ Argument | Description
 Copy stdin onto the device pasteboard.
 
 ```
-mirage pasteboard copy <device>
+mirage pasteboard copy [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## pasteboard paste
 
 Print the device pasteboard.
 
 ```
-mirage pasteboard paste <device>
+mirage pasteboard paste [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## pasteboard sync
 
@@ -859,12 +856,12 @@ $ mirage getenv booted HOME
 Trigger an iCloud sync on a device.
 
 ```
-mirage icloud-sync <device>
+mirage icloud-sync [<device>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 
 ## logverbose
 
@@ -884,12 +881,12 @@ Argument | Description
 Stream a device's unified log (Ctrl-C to stop). Wraps `log stream` on the device. Use --app for a quick process filter or --predicate for full NSPredicate syntax.
 
 ```
-mirage logs <device> [--predicate <predicate>] [--app <app>] [--level <level>]
+mirage logs [<device>] [--predicate <predicate>] [--app <app>] [--level <level>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `--predicate <predicate>` | NSPredicate filter, e.g. 'subsystem == "com.example"'.
 `--app <app>` | Shortcut: only logs from this process name.
 `--level <level>` | Log level: default, info, or debug.
