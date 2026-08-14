@@ -143,6 +143,87 @@ struct CreateCloneDeleteRenameTests {
         #expect(harness.lastArguments?[2] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro")
     }
 
+    @Test("a near-miss runtime asks 'did you mean' and proceeds on yes")
+    func createRuntimeSuggestionAccepted() async throws {
+        harness.stubInventory()
+        harness.ui.answerConfirm(true)
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
+
+        #expect(harness.ui.events.contains { event in
+            if case let .confirm(question) = event { return question.contains("iOS 18.4") }
+            return false
+        })
+        #expect(harness.lastArguments == [
+            "create", "Test",
+            "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+        ])
+    }
+
+    @Test("declining the runtime suggestion aborts without creating")
+    func createRuntimeSuggestionDeclined() async throws {
+        harness.stubInventory()
+        harness.ui.answerConfirm(false)
+
+        let exit = try await harness.runExpectingExit([
+            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18",
+        ])
+
+        #expect(exit == ExitCode(1))
+        #expect(harness.commandsAfterList.isEmpty)
+    }
+
+    @Test("non-interactive near-miss fails but names the closest runtime")
+    func createRuntimeSuggestionNonInteractive() async throws {
+        let harness = CLIHarness(isInteractive: false)
+        harness.stubInventory()
+
+        let exit = try await harness.runExpectingExit([
+            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18",
+        ])
+
+        #expect(exit == ExitCode(1))
+        #expect(harness.ui.errorMessages.first?.contains("iOS 18.4") == true)
+    }
+
+    @Test("--yes auto-accepts the closest runtime without prompting")
+    func createRuntimeSuggestionAutoAccepted() async throws {
+        let harness = CLIHarness(isInteractive: false)
+        harness.stubInventory()
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18", "--yes"])
+
+        #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
+        #expect(harness.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("iOS 18.4") }
+            return false
+        })
+        #expect(harness.lastArguments == [
+            "create", "Test",
+            "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
+        ])
+    }
+
+    @Test("an incompatible type/runtime pair fails with compatibility guidance")
+    func createIncompatible() async throws {
+        harness.stubInventory()
+
+        let exit = try await harness.runExpectingExit([
+            "create", "Test", "--type", "ipad", "--runtime", "18.4",
+        ])
+
+        #expect(exit == ExitCode(1))
+        let message = try #require(harness.ui.errorMessages.first)
+        #expect(message.contains("iPad Pro 13-inch (M4)"))
+        #expect(message.contains("iOS 26.0")) // runtimes that DO support it
+        #expect(message.contains("iPhone 17 Pro")) // devices iOS 18.4 DOES support
+        #expect(harness.commandsAfterList.isEmpty)
+    }
+
     @Test("create --boot boots the freshly created device")
     func createAndBoot() async throws {
         harness.stubInventory()

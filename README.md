@@ -75,14 +75,14 @@ substring, UDID, UDID prefix (≥ 4 chars), or `booted`.
 | `mirage list devicetypes [--json] [--family <family>]` | Device types; families: iPhone, iPad, Apple Watch, Apple TV, Apple Vision. |
 | `mirage list pairs` | Watch–phone pairs. |
 | `mirage booted [--json]` | Only booted devices. |
-| `mirage create <name> [--type <type>] [--runtime <runtime>] [--boot]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. Prints the new UDID. |
+| `mirage create <name> [--type <type>] [--runtime <runtime>] [--boot] [--yes]` | Fuzzy type ("iphone 17 pro") and runtime ("26.0"); newest compatible runtime by default; prompts for the type when interactive. A near-miss runtime ("18") offers the closest match — confirmed interactively, auto-accepted with `--yes`. Incompatible type/runtime pairs fail up front listing what works. Prints the new UDID. |
 | `mirage clone <device> <new-name>` | Clone; prints the new UDID. |
 | `mirage rename <device> <new-name>` | Rename. |
 | `mirage boot <device> [--wait] [--open]` | Boot; `--wait` blocks until booted, `--open` launches Simulator.app. |
 | `mirage shutdown [<device>] [--all]` | Shutdown one device or all. |
 | `mirage erase [<devices> ...] [--all] [--yes]` | Factory reset (confirmed). |
 | `mirage delete [<devices> ...] [--unavailable] [--all] [--yes]` | Delete devices, the unavailable ones, or everything (confirmed). |
-| `mirage upgrade <device> <runtime>` | Move a device to a newer runtime. |
+| `mirage upgrade <device> <runtime> [--yes]` | Move a device to a newer runtime; near-miss versions offer the closest match, incompatible pairs fail with guidance. |
 
 ### Cleanup & insight
 

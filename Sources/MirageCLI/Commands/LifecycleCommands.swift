@@ -157,6 +157,9 @@ struct CreateCommand: AsyncParsableCommand {
     @Flag(name: .long, help: "Boot the device right after creating it.")
     var boot = false
 
+    @Flag(name: .shortAndLong, help: "Assume yes for prompts, e.g. accepting the closest runtime match.")
+    var yes = false
+
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
@@ -174,7 +177,14 @@ struct CreateCommand: AsyncParsableCommand {
                 throw MirageCLIError("--type is required when running non-interactively.")
             }
 
-            let resolvedRuntime = try resolver.resolveRuntime(runtime, for: deviceType)
+            let resolvedRuntime = try resolveRuntimeForgivingly(
+                runtime,
+                for: deviceType,
+                resolver: resolver,
+                ui: ui,
+                assumeYes: yes
+            )
+            try requireCompatible(deviceType, with: resolvedRuntime, in: inventory)
 
             let udid = try simctl.create(
                 name: name,
@@ -308,6 +318,9 @@ struct UpgradeCommand: AsyncParsableCommand {
     @Argument(help: "Target runtime (version, name, or identifier).")
     var runtime: String
 
+    @Flag(name: .shortAndLong, help: "Assume yes for prompts, e.g. accepting the closest runtime match.")
+    var yes = false
+
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
@@ -316,7 +329,16 @@ struct UpgradeCommand: AsyncParsableCommand {
 
             let resolved = try resolver.resolveDevice(device)
             let deviceType = resolved.deviceTypeIdentifier.flatMap(inventory.deviceType(withIdentifier:))
-            let resolvedRuntime = try resolver.resolveRuntime(runtime, for: deviceType)
+            let resolvedRuntime = try resolveRuntimeForgivingly(
+                runtime,
+                for: deviceType,
+                resolver: resolver,
+                ui: CLIRuntime.ui,
+                assumeYes: yes
+            )
+            if let deviceType {
+                try requireCompatible(deviceType, with: resolvedRuntime, in: inventory)
+            }
 
             try simctl.upgrade(udid: resolved.udid, runtimeIdentifier: resolvedRuntime.identifier)
             CLIRuntime.ui.success("Upgraded \(resolved.name) to \(resolvedRuntime.name).")

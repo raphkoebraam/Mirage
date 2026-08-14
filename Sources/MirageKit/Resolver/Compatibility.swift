@@ -31,12 +31,12 @@ enum PlatformMapping {
     }
 }
 
-extension SimulatorInventory {
+public extension SimulatorInventory {
     /// Whether a device type can run on a runtime. The runtime's
     /// supported-device-type list is authoritative when present; otherwise
     /// the platform must match and the device type's min/max runtime version
     /// range decides.
-    public func isCompatible(_ deviceType: DeviceType, with runtime: SimRuntime) -> Bool {
+    func isCompatible(_ deviceType: DeviceType, with runtime: SimRuntime) -> Bool {
         if let supported = runtime.supportedDeviceTypes, !supported.isEmpty {
             return supported.contains { $0.identifier == deviceType.identifier }
         }
@@ -55,7 +55,7 @@ extension SimulatorInventory {
     }
 
     /// Available runtimes that can run the device type, newest first.
-    public func runtimes(supporting deviceType: DeviceType) -> [SimRuntime] {
+    func runtimes(supporting deviceType: DeviceType) -> [SimRuntime] {
         runtimes
             .filter { $0.isAvailable && isCompatible(deviceType, with: $0) }
             .sorted { SemanticVersion.compare($0.version, $1.version) == .orderedDescending }
@@ -63,7 +63,7 @@ extension SimulatorInventory {
 
     /// Device types a runtime can run, resolved against the inventory's full
     /// device-type records.
-    public func deviceTypes(supportedBy runtime: SimRuntime) -> [DeviceType] {
+    func deviceTypes(supportedBy runtime: SimRuntime) -> [DeviceType] {
         if let supported = runtime.supportedDeviceTypes, !supported.isEmpty {
             return supported.compactMap { deviceType(withIdentifier: $0.identifier) }
         }

@@ -55,12 +55,29 @@ struct RuntimeSuggestionTests {
 @Suite("Runtime–device compatibility")
 struct CompatibilityTests {
     let inventory: SimulatorInventory
-    var iphone17Pro: DeviceType { inventory.deviceTypes[0] }
-    var watchType: DeviceType { inventory.deviceTypes[1] }
-    var ipadType: DeviceType { inventory.deviceTypes[2] }
-    var ios26: SimRuntime { inventory.runtimes[0] }
-    var ios184: SimRuntime { inventory.runtime(withIdentifier: "com.apple.CoreSimulator.SimRuntime.iOS-18-4")! }
-    var watchos26: SimRuntime { inventory.runtime(withIdentifier: "com.apple.CoreSimulator.SimRuntime.watchOS-26-0")! }
+    var iphone17Pro: DeviceType {
+        inventory.deviceTypes[0]
+    }
+
+    var watchType: DeviceType {
+        inventory.deviceTypes[1]
+    }
+
+    var ipadType: DeviceType {
+        inventory.deviceTypes[2]
+    }
+
+    var ios26: SimRuntime {
+        inventory.runtimes[0]
+    }
+
+    var ios184: SimRuntime {
+        inventory.runtime(withIdentifier: "com.apple.CoreSimulator.SimRuntime.iOS-18-4")!
+    }
+
+    var watchos26: SimRuntime {
+        inventory.runtime(withIdentifier: "com.apple.CoreSimulator.SimRuntime.watchOS-26-0")!
+    }
 
     init() throws {
         inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
