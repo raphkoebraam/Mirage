@@ -39,10 +39,10 @@ Shell completions for zsh, bash, and fish are installed along with the binary.
 If you use [mise](https://mise.jdx.dev), installing Mirage is one line — it pulls the binary straight from the latest GitHub release:
 
 ```bash
-mise use -g "github:raphkoebraam/Mirage[exe=mirage]"
+mise use -g github:raphkoebraam/Mirage
 ```
 
-On mise versions older than the `github` backend, `ubi:raphkoebraam/Mirage[exe=mirage]` does the same thing.
+On mise versions older than the `github` backend, `ubi:raphkoebraam/Mirage[exe=mirage]` does the same thing — the `exe` option is required there, since the ubi backend looks for a file named after the repository.
 
 ### From a release archive
 
