@@ -11,6 +11,9 @@ jobs:
   release:
     name: Build & publish
     runs-on: macos-26
+    outputs:
+      version: ${{ steps.package.outputs.version }}
+      sha256: ${{ steps.package.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +50,7 @@ jobs:
           lipo -info build/Build/Products/Release/mirage
 
       - name: Package
+        id: package
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p dist
@@ -55,6 +59,8 @@ jobs:
           [ -f LICENSE ] && cp LICENSE dist/ || true
           tar -czf "mirage-$VERSION-macos.tar.gz" -C dist .
           shasum -a 256 "mirage-$VERSION-macos.tar.gz" | tee "mirage-$VERSION-macos.tar.gz.sha256"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(shasum -a 256 "mirage-$VERSION-macos.tar.gz" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       # Prefer the hand-written CHANGELOG section; fall back to generated notes
       # when the version has no entry yet.
@@ -84,3 +90,40 @@ jobs:
             "mirage-$VERSION-macos.tar.gz.sha256" \
             --title "$VERSION" \
             $NOTES_ARGS
+
+  homebrew:
+    name: Bump Homebrew formula
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      # HOMEBREW_TAP_TOKEN is a PAT with `contents: write` on the tap repo;
+      # github.token can only reach this repository. Without it the release
+      # still succeeds and prints the values to paste by hand.
+      - name: Update raphkoebraam/homebrew-tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ needs.release.outputs.version }}
+          SHA256: ${{ needs.release.outputs.sha256 }}
+        run: |
+          URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v$VERSION/mirage-$VERSION-macos.tar.gz"
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN is not set; update Formula/mirage.rb by hand."
+            echo "  url    \"$URL\""
+            echo "  sha256 \"$SHA256\""
+            exit 0
+          fi
+          git clone --depth 1 \
+            "https://x-access-token:$TAP_TOKEN@github.com/raphkoebraam/homebrew-tap.git" tap
+          cd tap
+          sed -i -E \
+            -e "s#^  url \".*\"#  url \"$URL\"#" \
+            -e "s#^  sha256 \".*\"#  sha256 \"$SHA256\"#" \
+            Formula/mirage.rb
+          if git diff --quiet; then
+            echo "Formula already points at $VERSION."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: mirage $VERSION"
+          git push
