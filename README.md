@@ -1,5 +1,8 @@
 # Mirage
 
+[![CI](https://github.com/raphkoebraam/Mirage/actions/workflows/ci.yml/badge.svg)](https://github.com/raphkoebraam/Mirage/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 > Codename **Mirage** — a simulated image that behaves like the real thing.
 
 Mirage is a friendly, scriptable command-line tool for Apple simulators. It sits on top of `xcrun simctl` and removes the parts that slow you down: copy-pasting UDIDs, remembering inconsistent subcommand names, and squinting at walls of text. You talk to simulators the way you think about them — by name — and Mirage works out the rest.
@@ -21,6 +24,16 @@ There's also a small layer of quality-of-life on top: a `cleanup` command that s
 
 ## Installation
 
+Mirage ships as a single universal binary (Apple silicon and Intel) and needs **macOS 15 or newer**. It has no runtime dependencies beyond what macOS already provides — Xcode is only required for the simulators themselves.
+
+### With Homebrew
+
+```bash
+brew install raphkoebraam/tap/mirage
+```
+
+Shell completions for zsh, bash, and fish are installed along with the binary.
+
 ### With mise
 
 If you use [mise](https://mise.jdx.dev), installing Mirage is one line — it pulls the binary straight from the latest GitHub release:
@@ -29,7 +42,15 @@ If you use [mise](https://mise.jdx.dev), installing Mirage is one line — it pu
 mise use -g "ubi:raphkoebraam/Mirage[exe=mirage]"
 ```
 
-While the repository is private, mise needs a `GITHUB_TOKEN` environment variable with access to it; once Mirage is public, the command works as-is for everyone.
+### From a release archive
+
+Grab `mirage-<version>-macos.tar.gz` from the [releases page](https://github.com/raphkoebraam/Mirage/releases), verify it against the published `.sha256`, and move the binary somewhere on your `PATH`:
+
+```bash
+shasum -a 256 -c mirage-<version>-macos.tar.gz.sha256
+tar -xzf mirage-<version>-macos.tar.gz
+sudo mv mirage /usr/local/bin/
+```
 
 ### From source
 
@@ -49,7 +70,17 @@ sudo ln -sf "$PWD/bin/mirage" /usr/local/bin/mirage
 
 If you'd rather have a stable copy, `sudo cp bin/mirage /usr/local/bin/` does it — or skip sudo entirely by copying the binary into `~/.local/bin` and adding that directory to `PATH` in your shell profile. Either way, `which mirage && mirage --version` confirms it worked.
 
-Build products stay inside the repo: DerivedData goes to `build/` and the release binary lands in `bin/mirage`, both git-ignored. You'll need macOS 15 or newer and Xcode 26 or newer.
+Build products stay inside the repo: DerivedData goes to `build/` and the release binary lands in `bin/mirage`, both git-ignored. Building from source needs Xcode 26 or newer.
+
+### Shell completions
+
+Homebrew wires these up for you. With any other install method, `mirage completions <shell>` prints the script and you decide where it goes:
+
+```bash
+mirage completions zsh > "${fpath[1]}/_mirage"          # zsh
+mirage completions bash > /usr/local/etc/bash_completion.d/mirage
+mirage completions fish > ~/.config/fish/completions/mirage.fish
+```
 
 ## Commands
 
