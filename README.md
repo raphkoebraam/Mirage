@@ -42,8 +42,6 @@ If you use [mise](https://mise.jdx.dev), installing Mirage is one line — it pu
 mise use -g github:raphkoebraam/Mirage
 ```
 
-On mise versions older than the `github` backend, `ubi:raphkoebraam/Mirage[exe=mirage]` does the same thing — the `exe` option is required there, since the ubi backend looks for a file named after the repository.
-
 ### From a release archive
 
 Grab `mirage-<version>-macos.tar.gz` from the [releases page](https://github.com/raphkoebraam/Mirage/releases), verify it against the published `.sha256`, and move the binary somewhere on your `PATH`:
