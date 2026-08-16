@@ -7,6 +7,10 @@
 
 Mirage is a friendly, scriptable command-line tool for Apple simulators. It sits on top of `xcrun simctl` and removes the parts that slow you down: copy-pasting UDIDs, remembering inconsistent subcommand names, and squinting at walls of text. You talk to simulators the way you think about them — by name — and Mirage works out the rest.
 
+<p align="center">
+  <img src="docs/assets/demo.gif" width="880" alt="Terminal recording: mirage list prints a table of four simulators, mirage boot &quot;17 pro&quot; matches and boots the iPhone 17 Pro, and mirage screenshot saves a timestamped PNG of the booted device.">
+</p>
+
 ```console
 $ mirage boot "iphone 17 pro"        # names, not UDIDs
 $ mirage create "CI Phone" --type "iphone 17 pro"   # newest runtime picked for you
