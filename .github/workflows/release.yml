@@ -28,6 +28,15 @@ jobs:
       - run: tuist install
       - run: tuist generate --no-open
 
+      # A tag can point anywhere; don't publish a build the suite hasn't seen.
+      - name: Tests
+        run: |
+          set -o pipefail
+          xcodebuild test -workspace Mirage.xcworkspace -scheme MirageKitTests \
+            -destination platform=macOS -derivedDataPath build | tail -40
+          xcodebuild test -workspace Mirage.xcworkspace -scheme MirageCLITests \
+            -destination platform=macOS -derivedDataPath build | tail -40
+
       - name: Build universal release binary
         run: |
           set -o pipefail
@@ -47,6 +56,24 @@ jobs:
           tar -czf "mirage-$VERSION-macos.tar.gz" -C dist .
           shasum -a 256 "mirage-$VERSION-macos.tar.gz" | tee "mirage-$VERSION-macos.tar.gz.sha256"
 
+      # Prefer the hand-written CHANGELOG section; fall back to generated notes
+      # when the version has no entry yet.
+      - name: Release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { capture = 1; next }
+            capture && /^## / { exit }
+            capture && /^\[.*\]: http/ { next }   # link definitions render as nothing
+            capture { print }
+          ' CHANGELOG.md > notes.md
+          if grep -q '[^[:space:]]' notes.md; then
+            echo "NOTES_ARGS=--notes-file notes.md" >> "$GITHUB_ENV"
+          else
+            echo "No CHANGELOG entry for $VERSION; falling back to generated notes."
+            echo "NOTES_ARGS=--generate-notes" >> "$GITHUB_ENV"
+          fi
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -55,5 +82,5 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "mirage-$VERSION-macos.tar.gz" \
             "mirage-$VERSION-macos.tar.gz.sha256" \
-            --title "mirage $VERSION" \
-            --generate-notes
+            --title "$VERSION" \
+            $NOTES_ARGS
