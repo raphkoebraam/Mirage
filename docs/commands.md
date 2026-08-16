@@ -298,7 +298,7 @@ $ mirage upgrade "Old Phone" 26.0
 
 ## cleanup
 
-Slim down the simulator roster. Removes unavailable devices (their runtime is gone) and duplicates (same name, type, and runtime — a booted copy is kept, else the one with the most data). Booted devices and watch-pair members are never touched. The plan is shown before anything is deleted.
+Slim down the simulator roster. Removes unavailable devices (their runtime is gone) and duplicates (same name, type, and runtime; a booted copy is kept, else the one with the most data). Booted devices and watch-pair members are never touched. The plan is shown before anything is deleted.
 
 ```
 mirage cleanup [--stale-runtimes] [--runtime <runtime> ...] [--images-not-used-since <days>] [--dry-run] [--yes]
