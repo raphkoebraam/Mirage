@@ -322,6 +322,26 @@ struct AdvancedCommandTests {
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
     }
 
+    @Test("--version means the runtime version, not the app version")
+    func runtimeUninstallVersionOption() async throws {
+        harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
+        harness.ui.answerConfirm(true)
+
+        try await harness.run(["runtime", "uninstall", "--version", "26.5"])
+
+        #expect(harness.lastArguments == ["runtime", "delete", "F5C0D8C6-39E5-42F6-A211-22892CFF099C"])
+    }
+
+    @Test("runtime uninstall wants exactly one of the identifier and --version")
+    func runtimeUninstallExactlyOneQuery() {
+        #expect(throws: (any Error).self) {
+            try Mirage.parseAsRoot(["runtime", "uninstall"])
+        }
+        #expect(throws: (any Error).self) {
+            try Mirage.parseAsRoot(["runtime", "uninstall", "26.5", "--version", "26.4"])
+        }
+    }
+
     @Test("runtime uninstall all skips resolution and removes every image")
     func runtimeUninstallAll() async throws {
         harness.ui.answerConfirm(true)

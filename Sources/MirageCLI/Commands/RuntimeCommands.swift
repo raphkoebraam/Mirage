@@ -239,24 +239,37 @@ struct RuntimeUninstallCommand: AsyncParsableCommand {
     )
 
     @Argument(help: "Runtime version ('18' means 18.0), build, image identifier, or 'all'.")
-    var identifier: String
+    var identifier: String?
+
+    /// Shadows the app-version flag on purpose: `runtime install --version`
+    /// means the runtime version, so here it must too, not print the CLI
+    /// version and quietly do nothing.
+    @Option(name: .long, help: "Runtime version to uninstall (same as passing it as the argument).")
+    var version: String?
 
     @Flag(name: .shortAndLong, help: "Skip the confirmation prompt.")
     var yes = false
+
+    func validate() throws {
+        guard (identifier != nil) != (version != nil) else {
+            throw ValidationError("Provide a runtime (version, build, or identifier) or --version, not both.")
+        }
+    }
 
     func run() async throws {
         try await withErrorPresentation {
             let ui = CLIRuntime.ui
             let simctl = CLIRuntime.simctl
+            let query = (identifier ?? version)!
 
-            if identifier == "all" {
+            if query == "all" {
                 try confirmDestructive("Delete ALL runtime images?", ui: ui, skip: yes)
                 try simctl.runtimeDelete(identifier: "all")
                 ui.success("Deleted all runtime images.")
                 return
             }
 
-            let image = try resolveImage(identifier, among: simctl.runtimeImages())
+            let image = try resolveImage(query, among: simctl.runtimeImages())
             let name = displayName(of: image)
             try confirmDestructive("Delete runtime image \(name)?", ui: ui, skip: yes)
             try simctl.runtimeDelete(identifier: image.identifier)

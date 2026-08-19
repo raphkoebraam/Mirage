@@ -987,12 +987,13 @@ $ mirage runtime install iOS 26.2
 Uninstall a runtime disk image ('all' removes every image). `runtime delete` remains an alias.
 
 ```
-mirage runtime uninstall <identifier> [--yes]
+mirage runtime uninstall [<identifier>] [--version <version>] [--yes]
 ```
 
 Argument | Description
 --- | ---
 `<identifier>` | Runtime version ('18' means 18.0), build, image identifier, or 'all'.
+`--version <version>` | Runtime version to uninstall (same as passing it as the argument).
 `-y, --yes` | Skip the confirmation prompt.
 
 ```console
