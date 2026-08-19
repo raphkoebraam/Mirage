@@ -24,13 +24,13 @@ Type "export MIRAGE_DEVICE_SET=$(mktemp -d)/devices"
 Enter
 Type "mkdir -p $MIRAGE_DEVICE_SET"
 Enter
-Type `mirage create "iPhone 17 Pro" --type "iPhone 17 Pro" --yes`
+Type `mirage create --type "iPhone 17 Pro" --yes`
 Enter
-Type `mirage create "iPhone 16" --type "iPhone 16" --yes`
+Type `mirage create --type "iPhone 16" --yes`
 Enter
-Type `mirage create "CI Phone" --type "iPhone 17" --yes`
+Type `mirage create --name "CI Phone" --type "iPhone 17" --yes`
 Enter
-Type `mirage create "iPad Pro 13-inch" --type "iPad Pro 13-inch (M4)" --yes`
+Type `mirage create --name "iPad Pro 13-inch" --type "iPad Pro 13-inch (M4)" --yes`
 Enter
 Type "cd $(mktemp -d)"
 Enter

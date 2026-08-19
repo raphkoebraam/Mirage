@@ -49,7 +49,7 @@ struct IOCommandTests {
     func mediaAdd() async throws {
         harness.stubInventory()
 
-        try await harness.run(["media", "add", "booted", "/tmp/a.png", "/tmp/b.mov"])
+        try await harness.run(["media", "add", "booted", "--path", "/tmp/a.png", "/tmp/b.mov"])
 
         #expect(harness.lastArguments == [
             "addmedia", "9EC7498F-C644-4431-8CA5-CD1432170998", "/tmp/a.png", "/tmp/b.mov",
@@ -65,7 +65,7 @@ struct SystemCommandTests {
     func openURL() async throws {
         harness.stubInventory()
 
-        try await harness.run(["open", "booted", "https://example.com/path"])
+        try await harness.run(["open", "booted", "--url", "https://example.com/path"])
 
         #expect(harness.lastArguments == [
             "openurl", "9EC7498F-C644-4431-8CA5-CD1432170998", "https://example.com/path",
@@ -76,7 +76,7 @@ struct SystemCommandTests {
     func push() async throws {
         harness.stubInventory()
 
-        try await harness.run(["push", "booted", "com.example.app", "/tmp/payload.json"])
+        try await harness.run(["push", "booted", "--bundle-id", "com.example.app", "--payload", "/tmp/payload.json"])
 
         #expect(harness.lastArguments == [
             "push", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app", "/tmp/payload.json",
@@ -87,7 +87,7 @@ struct SystemCommandTests {
     func pushStdin() async throws {
         harness.stubInventory()
 
-        try await harness.run(["push", "booted", "com.example.app"])
+        try await harness.run(["push", "booted", "--bundle-id", "com.example.app"])
 
         #expect(harness.lastArguments == [
             "push", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app", "-",
@@ -98,7 +98,7 @@ struct SystemCommandTests {
     func pushMessage() async throws {
         harness.stubInventory()
 
-        try await harness.run(["push", "booted", "com.example.app", "--message", "Hello there"])
+        try await harness.run(["push", "booted", "--bundle-id", "com.example.app", "--message", "Hello there"])
 
         let arguments = try #require(harness.lastArguments)
         #expect(Array(arguments.prefix(3)) == ["push", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
@@ -114,7 +114,7 @@ struct SystemCommandTests {
         harness.stubInventory()
 
         try await harness.run([
-            "push", "booted", "com.example.app", "--json-payload", #"{"aps":{"badge":7}}"#,
+            "push", "booted", "--bundle-id", "com.example.app", "--json-payload", #"{"aps":{"badge":7}}"#,
         ])
 
         let payloadPath = try #require(harness.lastArguments?.last)
@@ -127,7 +127,7 @@ struct SystemCommandTests {
         harness.stubInventory()
 
         let exit = try await harness.runExpectingExit([
-            "push", "booted", "com.example.app", "--json-payload", "not json",
+            "push", "booted", "--bundle-id", "com.example.app", "--json-payload", "not json",
         ])
 
         #expect(exit != nil)
@@ -138,7 +138,7 @@ struct SystemCommandTests {
     func pushConflictingSources() async throws {
         await #expect(throws: (any Error).self) {
             try await harness.run([
-                "push", "booted", "com.example.app", "/tmp/p.json", "--message", "hi",
+                "push", "booted", "--bundle-id", "com.example.app", "--payload", "/tmp/p.json", "--message", "hi",
             ])
         }
     }
@@ -146,7 +146,7 @@ struct SystemCommandTests {
     @Test("privacy grant requires a bundle id")
     func privacyGrantWithoutBundle() async throws {
         await #expect(throws: (any Error).self) {
-            try await harness.run(["privacy", "grant", "booted", "photos"])
+            try await harness.run(["privacy", "grant", "booted", "--service", "photos"])
         }
         #expect(harness.runner.executed.isEmpty)
     }
@@ -155,7 +155,7 @@ struct SystemCommandTests {
     func privacyGrant() async throws {
         harness.stubInventory()
 
-        try await harness.run(["privacy", "grant", "booted", "photos", "com.example.app"])
+        try await harness.run(["privacy", "grant", "booted", "--service", "photos", "--bundle-id", "com.example.app"])
 
         #expect(harness.lastArguments == [
             "privacy", "9EC7498F-C644-4431-8CA5-CD1432170998", "grant", "photos", "com.example.app",
@@ -166,7 +166,7 @@ struct SystemCommandTests {
     func privacyReset() async throws {
         harness.stubInventory()
 
-        try await harness.run(["privacy", "reset", "booted", "all"])
+        try await harness.run(["privacy", "reset", "booted", "--service", "all"])
 
         #expect(harness.lastArguments == [
             "privacy", "9EC7498F-C644-4431-8CA5-CD1432170998", "reset", "all",
@@ -233,7 +233,7 @@ struct StatusBarUICommandTests {
     func uiAppearance() async throws {
         harness.stubInventory()
 
-        try await harness.run(["ui", "appearance", "booted", "dark"])
+        try await harness.run(["ui", "appearance", "booted", "--set", "dark"])
         #expect(harness.lastArguments == ["ui", "9EC7498F-C644-4431-8CA5-CD1432170998", "appearance", "dark"])
 
         let second = CLIHarness()
@@ -248,7 +248,7 @@ struct StatusBarUICommandTests {
     func uiContentSize() async throws {
         harness.stubInventory()
 
-        try await harness.run(["ui", "content-size", "booted", "extra-large"])
+        try await harness.run(["ui", "content-size", "booted", "--set", "extra-large"])
 
         #expect(harness.lastArguments == [
             "ui", "9EC7498F-C644-4431-8CA5-CD1432170998", "content_size", "extra-large",
@@ -259,7 +259,7 @@ struct StatusBarUICommandTests {
     func uiIncreaseContrast() async throws {
         harness.stubInventory()
 
-        try await harness.run(["ui", "increase-contrast", "booted", "enabled"])
+        try await harness.run(["ui", "increase-contrast", "booted", "--set", "enabled"])
 
         #expect(harness.lastArguments == [
             "ui", "9EC7498F-C644-4431-8CA5-CD1432170998", "increase_contrast", "enabled",

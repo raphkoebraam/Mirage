@@ -38,16 +38,23 @@ extension Simctl {
     /// Resolves an optional device query; omitting it targets the booted
     /// simulator, with a friendlier error when there isn't one.
     func resolvedTarget(_ query: String?) throws -> Device {
+        try DeviceResolver(inventory: list()).resolveTarget(query)
+    }
+}
+
+extension DeviceResolver {
+    /// `resolveDevice` for an optional query: nil means the booted simulator.
+    func resolveTarget(_ query: String?) throws -> Device {
         guard let query else {
             do {
-                return try resolvedDevice("booted")
+                return try resolveDevice("booted")
             } catch ResolutionError.noBootedDevice {
                 throw MirageCLIError(
                     "No device given and nothing is booted — pass a device or boot one first."
                 )
             }
         }
-        return try resolvedDevice(query)
+        return try resolveDevice(query)
     }
 }
 

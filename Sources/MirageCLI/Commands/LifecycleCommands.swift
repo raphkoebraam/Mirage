@@ -142,11 +142,12 @@ struct CreateCommand: AsyncParsableCommand {
         commandName: "create",
         abstract: "Create a new simulator.",
         discussion: "Device type and runtime accept fuzzy names ('iphone 17 pro', '26.0'). "
-            + "Without --runtime the newest runtime for the device type is used."
+            + "Without --runtime the newest runtime for the device type is used; "
+            + "without --name the device type's name is used."
     )
 
-    @Argument(help: "Name for the new simulator.")
-    var name: String
+    @Option(name: .long, help: "Name for the new simulator. Defaults to the device type's name.")
+    var name: String?
 
     @Option(name: .long, help: "Device type (name, substring, or identifier).")
     var type: String?
@@ -186,6 +187,7 @@ struct CreateCommand: AsyncParsableCommand {
             )
             try requireCompatible(deviceType, with: resolvedRuntime, in: inventory)
 
+            let name = name ?? deviceType.name
             let udid = try simctl.create(
                 name: name,
                 deviceTypeIdentifier: deviceType.identifier,
@@ -212,21 +214,21 @@ struct CloneCommand: AsyncParsableCommand {
         abstract: "Clone a simulator."
     )
 
-    @Argument(help: "Source device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Source device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Name for the clone.")
-    var newName: String
+    @Option(name: .long, help: "Name for the clone.")
+    var name: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let ui = CLIRuntime.ui
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
 
-            let udid = try simctl.clone(udid: resolved.udid, newName: newName)
+            let udid = try simctl.clone(udid: resolved.udid, newName: name)
 
-            ui.success("Cloned \(resolved.name) → \(newName).")
+            ui.success("Cloned \(resolved.name) → \(name).")
             ui.output(udid)
         }
     }
@@ -291,18 +293,18 @@ struct RenameCommand: AsyncParsableCommand {
         abstract: "Rename a simulator."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The new name.")
-    var newName: String
+    @Option(name: .long, help: "The new name.")
+    var name: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
-            try simctl.rename(udid: resolved.udid, to: newName)
-            CLIRuntime.ui.success("Renamed \(resolved.name) → \(newName).")
+            let resolved = try simctl.resolvedTarget(device)
+            try simctl.rename(udid: resolved.udid, to: name)
+            CLIRuntime.ui.success("Renamed \(resolved.name) → \(name).")
         }
     }
 }
@@ -313,10 +315,10 @@ struct UpgradeCommand: AsyncParsableCommand {
         abstract: "Upgrade a simulator to a newer runtime."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Target runtime (version, name, or identifier).")
+    @Option(name: .long, help: "Target runtime (version, name, or identifier).")
     var runtime: String
 
     @Flag(name: .shortAndLong, help: "Assume yes for prompts, e.g. accepting the closest runtime match.")
@@ -328,7 +330,7 @@ struct UpgradeCommand: AsyncParsableCommand {
             let inventory = try simctl.list()
             let resolver = DeviceResolver(inventory: inventory)
 
-            let resolved = try resolver.resolveDevice(device)
+            let resolved = try resolver.resolveTarget(device)
             let deviceType = resolved.deviceTypeIdentifier.flatMap(inventory.deviceType(withIdentifier:))
             let resolvedRuntime = try resolveRuntimeForgivingly(
                 runtime,

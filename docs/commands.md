@@ -43,7 +43,9 @@ Every Mirage command, generated from the binary's own `--help` output so nothing
 **System state:**
 [open](#open) ·
 [push](#push) ·
-[privacy](#privacy) ·
+[privacy grant](#privacy-grant) ·
+[privacy revoke](#privacy-revoke) ·
+[privacy reset](#privacy-reset) ·
 [statusbar override](#statusbar-override) ·
 [statusbar demo](#statusbar-demo) ·
 [statusbar clear](#statusbar-clear) ·
@@ -152,23 +154,23 @@ $ mirage booted
 
 ## create
 
-Create a new simulator. Device type and runtime accept fuzzy names ('iphone 17 pro', '26.0'). Without --runtime the newest runtime for the device type is used.
+Create a new simulator. Device type and runtime accept fuzzy names ('iphone 17 pro', '26.0'). Without --runtime the newest runtime for the device type is used; without --name the device type's name is used.
 
 ```
-mirage create <name> [--type <type>] [--runtime <runtime>] [--boot] [--yes]
+mirage create [--name <name>] [--type <type>] [--runtime <runtime>] [--boot] [--yes]
 ```
 
 Argument | Description
 --- | ---
-`<name>` | Name for the new simulator.
+`--name <name>` | Name for the new simulator. Defaults to the device type's name.
 `--type <type>` | Device type (name, substring, or identifier).
 `--runtime <runtime>` | Runtime (version, name, or identifier). Defaults to the newest compatible one.
 `--boot` | Boot the device right after creating it.
 `-y, --yes` | Assume yes for prompts, e.g. accepting the closest runtime match.
 
 ```console
-$ mirage create "CI Phone" --type "iphone 17 pro" --boot
-$ mirage create "Old Phone" --type "iphone 16" --runtime 18.5
+$ mirage create --type "iphone 17 pro" --boot              # named "iPhone 17 Pro"
+$ mirage create --name "Old Phone" --type "iphone 16" --runtime 18.5
 ```
 
 ## clone
@@ -176,16 +178,16 @@ $ mirage create "Old Phone" --type "iphone 16" --runtime 18.5
 Clone a simulator.
 
 ```
-mirage clone <device> <new-name>
+mirage clone [<device>] --name <name>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Source device (name, UDID, prefix, or 'booted').
-`<new-name>` | Name for the clone.
+`<device>` | Source device (name, UDID, or prefix); defaults to the booted simulator.
+`--name <name>` | Name for the clone.
 
 ```console
-$ mirage clone "CI Phone" "CI Phone Copy"
+$ mirage clone "CI Phone" --name "CI Phone Copy"
 ```
 
 ## rename
@@ -193,16 +195,16 @@ $ mirage clone "CI Phone" "CI Phone Copy"
 Rename a simulator.
 
 ```
-mirage rename <device> <new-name>
+mirage rename [<device>] --name <name>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<new-name>` | The new name.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--name <name>` | The new name.
 
 ```console
-$ mirage rename "CI Phone" "Test Phone"
+$ mirage rename "CI Phone" --name "Test Phone"
 ```
 
 ## boot
@@ -282,17 +284,17 @@ $ mirage delete --unavailable --yes
 Upgrade a simulator to a newer runtime.
 
 ```
-mirage upgrade <device> <runtime> [--yes]
+mirage upgrade [<device>] --runtime <runtime> [--yes]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<runtime>` | Target runtime (version, name, or identifier).
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--runtime <runtime>` | Target runtime (version, name, or identifier).
 `-y, --yes` | Assume yes for prompts, e.g. accepting the closest runtime match.
 
 ```console
-$ mirage upgrade "Old Phone" 26.0
+$ mirage upgrade "Old Phone" --runtime 26.0
 ```
 
 # Cleanup & insight
@@ -354,16 +356,16 @@ $ mirage doctor
 Install an app bundle.
 
 ```
-mirage app install <device> <path>
+mirage app install [<device>] --path <path>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<path>` | Path to the .app bundle.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--path <path>` | Path to the .app bundle.
 
 ```console
-$ mirage app install booted ./build/My.app
+$ mirage app install --path ./build/My.app
 ```
 
 ## app uninstall
@@ -371,33 +373,32 @@ $ mirage app install booted ./build/My.app
 Uninstall an app.
 
 ```
-mirage app uninstall <device> <bundle-id>
+mirage app uninstall [<device>] --bundle-id <bundle-id>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | The app's bundle identifier.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--bundle-id <bundle-id>` | The app's bundle identifier.
 ## app launch
 
-Launch an app. Pass app arguments after '--', e.g. `mirage app launch booted com.example -- -AppleLocale en_US`.
+Launch an app. Pass app arguments after '--', e.g. `mirage app launch --bundle-id com.example -- -AppleLocale en_US`.
 
 ```
-mirage app launch <device> <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] -- [<app-arguments> ...]
+mirage app launch [<device>] --bundle-id <bundle-id> [--console] [--wait-for-debugger] [--terminate-running] -- [<app-arguments> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | The app's bundle identifier.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `<app-arguments>` | Arguments passed to the app.
+`--bundle-id <bundle-id>` | The app's bundle identifier.
 `--console` | Stream the app's console output (Ctrl-C to stop).
 `--wait-for-debugger` | Wait for a debugger to attach before running.
 `--terminate-running` | Terminate an already-running instance first.
 
 ```console
-$ mirage app launch booted com.example.app --console
+$ mirage app launch --bundle-id com.example.app --console
 ```
 
 ## app terminate
@@ -405,14 +406,13 @@ $ mirage app launch booted com.example.app --console
 Terminate a running app.
 
 ```
-mirage app terminate <device> <bundle-id>
+mirage app terminate [<device>] --bundle-id <bundle-id>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | The app's bundle identifier.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--bundle-id <bundle-id>` | The app's bundle identifier.
 ## app list
 
 List installed apps.
@@ -436,27 +436,26 @@ $ mirage app list booted
 Show information about an installed app.
 
 ```
-mirage app info <device> <bundle-id>
+mirage app info [<device>] --bundle-id <bundle-id>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | The app's bundle identifier.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--bundle-id <bundle-id>` | The app's bundle identifier.
 ## app container
 
 Print an app container path. Container kinds: app, data, groups, or an app group identifier.
 
 ```
-mirage app container <device> <bundle-id> [<container>]
+mirage app container [<device>] --bundle-id <bundle-id> [--container <container>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | The app's bundle identifier.
-`<container>` | Container kind (app, data, groups, or a group id).
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--bundle-id <bundle-id>` | The app's bundle identifier.
+`--container <container>` | Container kind (app, data, groups, or a group id).
 
 ```console
 $ open $(mirage app container booted com.example.app data)
@@ -467,14 +466,13 @@ $ open $(mirage app container booted com.example.app data)
 Install an .xcappdata package, replacing the app's data container.
 
 ```
-mirage app install-data <device> <path>
+mirage app install-data [<device>] --path <path>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<path>` | Path to the .xcappdata package.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--path <path>` | Path to the .xcappdata package.
 # Capture & media
 
 ## screenshot
@@ -524,16 +522,16 @@ $ mirage record booted -o demo.mov   # Ctrl-C stops and finalizes
 Add photos, live photos, videos, or contacts.
 
 ```
-mirage media add <device> <paths> ...
+mirage media add [<device>] [--path <path> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<paths>` | Files to add.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--path <path>` | Files to add (repeatable, or several after one --path).
 
 ```console
-$ mirage media add booted photo.png video.mov
+$ mirage media add --path photo.png video.mov
 ```
 
 # System state
@@ -543,57 +541,87 @@ $ mirage media add booted photo.png video.mov
 Open a URL on a simulator (https, deep links, etc.).
 
 ```
-mirage open <device> <url>
+mirage open [<device>] --url <url>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<url>` | The URL to open.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--url <url>` | The URL to open.
 
 ```console
-$ mirage open booted "myapp://deep/link"
+$ mirage open --url "myapp://deep/link"
 ```
 
 ## push
 
-Send a simulated push notification. Without a payload file the JSON payload is read from stdin. The payload may embed 'Simulator Target Bundle' instead of passing a bundle id.
+Send a simulated push notification. Without --payload, --message, or --json-payload the JSON payload is read from stdin. The payload may embed 'Simulator Target Bundle' instead of passing --bundle-id.
 
 ```
-mirage push <device> [<bundle-id>] [<payload>] [--message <message>] [--json-payload <json-payload>]
+mirage push [<device>] [--bundle-id <bundle-id>] [--payload <payload>] [--message <message>] [--json-payload <json-payload>]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<bundle-id>` | Target app's bundle identifier.
-`<payload>` | Path to the APNS JSON payload (stdin when omitted).
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--bundle-id <bundle-id>` | Target app's bundle identifier.
+`--payload <payload>` | Path to the APNS JSON payload file.
 `--message <message>` | Shortcut: send a plain alert with this text (no payload file needed).
 `--json-payload <json-payload>` | Inline JSON payload string.
 
 ```console
-$ mirage push booted com.example.app --message "Hello!"
-$ mirage push booted com.example.app payload.json
+$ mirage push --bundle-id com.example.app --message "Hello!"
+$ mirage push --bundle-id com.example.app --payload payload.json
 ```
 
-## privacy
+## privacy grant
 
-Grant, revoke, or reset privacy permissions. Services: all, calendar, contacts, contacts-limited, location, location-always, photos, photos-add, media-library, microphone, motion, reminders, siri.
+Grant a privacy permission to an app. Services: all, calendar, contacts, contacts-limited, location, location-always, photos, photos-add, media-library, microphone, motion, reminders, siri.
 
 ```
-mirage privacy <action> <device> <service> [<bundle-id>]
+mirage privacy grant [<device>] --service <service> --bundle-id <bundle-id>
 ```
 
 Argument | Description
 --- | ---
-`<action>` | Action: grant, revoke, or reset. (values: grant, revoke, reset)
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<service>` | The privacy service to modify.
-`<bundle-id>` | Target app's bundle identifier (required for grant/revoke).
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--service <service>` | The privacy service to grant (see `mirage privacy --help`).
+`--bundle-id <bundle-id>` | Target app's bundle identifier.
 
 ```console
-$ mirage privacy grant booted photos com.example.app
-$ mirage privacy reset booted all
+$ mirage privacy grant --service photos --bundle-id com.example.app
+```
+
+## privacy revoke
+
+Revoke a privacy permission from an app.
+
+```
+mirage privacy revoke [<device>] --service <service> --bundle-id <bundle-id>
+```
+
+Argument | Description
+--- | ---
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--service <service>` | The privacy service to revoke (see `mirage privacy --help`).
+`--bundle-id <bundle-id>` | Target app's bundle identifier.
+
+## privacy reset
+
+Reset a privacy permission, for one app or for all apps.
+
+```
+mirage privacy reset [<device>] --service <service> [--bundle-id <bundle-id>]
+```
+
+Argument | Description
+--- | ---
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--service <service>` | The privacy service to reset ('all' for every service).
+`--bundle-id <bundle-id>` | Target app's bundle identifier; omit to reset every app.
+
+```console
+$ mirage privacy reset --service all
 ```
 
 ## statusbar override
@@ -666,15 +694,17 @@ Argument | Description
 Get or set light/dark appearance.
 
 ```
-mirage ui appearance [<arguments> ...]
+mirage ui appearance [<device>] [--set <set>]
 ```
 
 Argument | Description
 --- | ---
-`<arguments>` | Optional device, optional value (light or dark): [<device>] [<value>].
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--set <set>` | New value: light or dark. Omit to print the current value.
 
 ```console
-$ mirage ui appearance booted dark
+$ mirage ui appearance --set dark
+$ mirage ui appearance              # prints the current value
 ```
 
 ## ui content-size
@@ -682,40 +712,41 @@ $ mirage ui appearance booted dark
 Get or set the preferred content size category.
 
 ```
-mirage ui content-size [<arguments> ...]
+mirage ui content-size [<device>] [--set <set>]
 ```
 
 Argument | Description
 --- | ---
-`<arguments>` | Optional device, optional value (a size category, increment, or decrement): [<device>] [<value>].
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--set <set>` | New value: a size category, increment, or decrement. Omit to print the current value.
 ## ui increase-contrast
 
 Get or set Increase Contrast mode.
 
 ```
-mirage ui increase-contrast [<arguments> ...]
+mirage ui increase-contrast [<device>] [--set <set>]
 ```
 
 Argument | Description
 --- | ---
-`<arguments>` | Optional device, optional value (enabled or disabled): [<device>] [<value>].
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--set <set>` | New value: enabled or disabled. Omit to print the current value.
 ## location set
 
-Set a fixed location. Coordinates are 'latitude,longitude', e.g. 37.3349,-122.009.
+Set a fixed location. Decimal degrees, e.g. --latitude 37.3349 --longitude -122.009.
 
 ```
-mirage location set <device> <coordinates>
+mirage location set [<device>] --latitude <latitude> --longitude <longitude>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<coordinates>` | Coordinates as lat,lon.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--latitude <latitude>` | Latitude in decimal degrees.
+`--longitude <longitude>` | Longitude in decimal degrees.
 
 ```console
-$ mirage location set booted 37.3349,-122.009
+$ mirage location set --latitude 37.3349 --longitude -122.009
 ```
 
 ## location clear
@@ -735,14 +766,13 @@ Argument | Description
 Run a location scenario (see `mirage location list`).
 
 ```
-mirage location run <device> <scenario>
+mirage location run [<device>] --scenario <scenario>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<scenario>` | Scenario name.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--scenario <scenario>` | Scenario name.
 ## location list
 
 List available location scenarios.
@@ -760,40 +790,37 @@ Argument | Description
 Add a certificate to the trusted root store.
 
 ```
-mirage keychain add-root-cert <device> <path>
+mirage keychain add-root-cert [<device>] --path <path>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<path>` | Path to the certificate.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--path <path>` | Path to the certificate.
 ## keychain add-cert
 
 Add a certificate to the keychain.
 
 ```
-mirage keychain add-cert <device> <path>
+mirage keychain add-cert [<device>] --path <path>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<path>` | Path to the certificate.
-
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--path <path>` | Path to the certificate.
 ## keychain reset
 
 Reset the device's keychain.
 
 ```
-mirage keychain reset <device> [--yes]
+mirage keychain reset [<device>] [--yes]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `-y, --yes` | Skip the confirmation prompt.
-
 ## pasteboard copy
 
 Copy stdin onto the device pasteboard.
@@ -840,16 +867,16 @@ $ mirage pasteboard sync host booted   # Mac clipboard → simulator
 Print an environment variable from a device.
 
 ```
-mirage getenv <device> <variable>
+mirage getenv [<device>] --variable <variable>
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<variable>` | Variable name (e.g. HOME).
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--variable <variable>` | Variable name (e.g. HOME).
 
 ```console
-$ mirage getenv booted HOME
+$ mirage getenv --variable HOME
 ```
 
 ## icloud-sync
@@ -869,14 +896,18 @@ Argument | Description
 Enable or disable verbose logging on a device.
 
 ```
-mirage logverbose <device> <mode>
+mirage logverbose [<device>] --on --off
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<mode>` | on or off.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
+`--on` | Enable verbose logging.
+`--off` | Disable verbose logging.
 
+```console
+$ mirage logverbose --on
+```
 ## logs
 
 Stream a device's unified log (Ctrl-C to stop). Wraps `log stream` on the device. Use --app for a quick process filter or --predicate for full NSPredicate syntax.
@@ -970,16 +1001,16 @@ $ mirage runtime available --platform iOS
 Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5 to 10 GB) and stream progress. The version is checked against Apple's catalog first: `17` means 17.0, an already installed build is reported instead of re-downloaded, and an unknown version lists what is available.
 
 ```
-mirage runtime install <platform> [<version>]
+mirage runtime install --platform <platform> [--version <version>]
 ```
 
 Argument | Description
 --- | ---
-`<platform>` | Platform: iOS, watchOS, tvOS, or visionOS.
-`<version>` | Runtime version (e.g. 26.2). Latest when omitted.
+`--platform <platform>` | Platform: iOS, watchOS, tvOS, or visionOS.
+`--version <version>` | Runtime version (e.g. 26.2). Latest when omitted.
 
 ```console
-$ mirage runtime install iOS 26.2
+$ mirage runtime install --platform iOS --version 26.2
 ```
 
 ## runtime uninstall
@@ -1016,20 +1047,20 @@ Argument | Description
 
 ## spawn
 
-Spawn an executable on a device. Pass executable arguments after '--'.
+Spawn an executable on a device. Pass executable arguments after '--', e.g. `mirage spawn --executable /bin/ls -- -la`.
 
 ```
-mirage spawn <device> <executable> -- [<executable-arguments> ...]
+mirage spawn [<device>] --executable <executable> -- [<executable-arguments> ...]
 ```
 
 Argument | Description
 --- | ---
-`<device>` | Device (name, UDID, prefix, or 'booted').
-`<executable>` | Path to the executable.
+`<device>` | Device (name, UDID, or prefix); defaults to the booted simulator.
 `<executable-arguments>` | Arguments for the executable.
+`--executable <executable>` | Path to the executable on the device.
 
 ```console
-$ mirage spawn booted /bin/ls -- -la /
+$ mirage spawn --executable /bin/ls -- -la /
 ```
 
 ## completions

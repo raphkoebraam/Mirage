@@ -72,22 +72,22 @@ struct DefaultDeviceTests {
     }
 }
 
-@Suite("ui commands with a single argument")
-struct UIValueDisambiguationTests {
+@Suite("ui commands: --set writes, its absence reads")
+struct UISetOrGetTests {
     let harness = CLIHarness()
 
-    @Test("a known value targets the booted simulator")
-    func valueOnly() async throws {
+    @Test("--set without a device targets the booted simulator")
+    func setBooted() async throws {
         harness.stubInventory()
 
-        try await harness.run(["ui", "appearance", "dark"])
+        try await harness.run(["ui", "appearance", "--set", "dark"])
 
         #expect(harness.lastArguments == [
             "ui", "9EC7498F-C644-4431-8CA5-CD1432170998", "appearance", "dark",
         ])
     }
 
-    @Test("anything else is treated as a device query (a get)")
+    @Test("a device alone reads that device's setting")
     func deviceOnly() async throws {
         harness.stubInventory()
         harness.runner.stub(stdout: "light\n")
@@ -112,14 +112,23 @@ struct UIValueDisambiguationTests {
         ])
     }
 
-    @Test("device and value together still work")
+    @Test("device and --set together")
     func both() async throws {
         harness.stubInventory()
 
-        try await harness.run(["ui", "increase-contrast", "ipad", "enabled"])
+        try await harness.run(["ui", "increase-contrast", "ipad", "--set", "enabled"])
 
         #expect(harness.lastArguments == [
             "ui", "11111111-2222-3333-4444-555555555555", "increase_contrast", "enabled",
         ])
+    }
+
+    @Test("a value the option does not know is rejected before simctl runs")
+    func unknownValue() async throws {
+        let exit = try await harness.runExpectingExit(["ui", "appearance", "--set", "sepia"])
+
+        #expect(exit == ExitCode(1))
+        #expect(harness.runner.executed.isEmpty)
+        #expect(harness.ui.errorMessages.first?.contains("light, dark") == true)
     }
 }

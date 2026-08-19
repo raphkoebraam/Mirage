@@ -24,16 +24,16 @@ struct AppInstallCommand: AsyncParsableCommand {
         abstract: "Install an app bundle."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Path to the .app bundle.")
+    @Option(name: .long, help: "Path to the .app bundle.")
     var path: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.install(udid: resolved.udid, appPath: path)
             CLIRuntime.ui.success("Installed \(path) on \(resolved.name).")
         }
@@ -46,16 +46,16 @@ struct AppUninstallCommand: AsyncParsableCommand {
         abstract: "Uninstall an app."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The app's bundle identifier.")
+    @Option(name: .long, help: "The app's bundle identifier.")
     var bundleID: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.uninstall(udid: resolved.udid, bundleID: bundleID)
             CLIRuntime.ui.success("Uninstalled \(bundleID) from \(resolved.name).")
         }
@@ -66,13 +66,14 @@ struct AppLaunchCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "launch",
         abstract: "Launch an app.",
-        discussion: "Pass app arguments after '--', e.g. `mirage app launch booted com.example -- -AppleLocale en_US`."
+        discussion: "Pass app arguments after '--', e.g. "
+            + "`mirage app launch --bundle-id com.example -- -AppleLocale en_US`."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The app's bundle identifier.")
+    @Option(name: .long, help: "The app's bundle identifier.")
     var bundleID: String
 
     @Flag(name: .long, help: "Stream the app's console output (Ctrl-C to stop).")
@@ -91,7 +92,7 @@ struct AppLaunchCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let ui = CLIRuntime.ui
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
 
             if console {
                 _ = try simctl.launchWithConsole(
@@ -127,16 +128,16 @@ struct AppTerminateCommand: AsyncParsableCommand {
         abstract: "Terminate a running app."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The app's bundle identifier.")
+    @Option(name: .long, help: "The app's bundle identifier.")
     var bundleID: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.terminate(udid: resolved.udid, bundleID: bundleID)
             CLIRuntime.ui.success("Terminated \(bundleID) on \(resolved.name).")
         }
@@ -202,16 +203,16 @@ struct AppInfoCommand: AsyncParsableCommand {
         abstract: "Show information about an installed app."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The app's bundle identifier.")
+    @Option(name: .long, help: "The app's bundle identifier.")
     var bundleID: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(simctl.appInfo(udid: resolved.udid, bundleID: bundleID))
         }
     }
@@ -224,19 +225,19 @@ struct AppContainerCommand: AsyncParsableCommand {
         discussion: "Container kinds: app, data, groups, or an app group identifier."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The app's bundle identifier.")
+    @Option(name: .long, help: "The app's bundle identifier.")
     var bundleID: String
 
-    @Argument(help: "Container kind (app, data, groups, or a group id).")
+    @Option(name: .long, help: "Container kind (app, data, groups, or a group id).")
     var container: String?
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(
                 simctl.appContainer(udid: resolved.udid, bundleID: bundleID, container: container)
             )
@@ -250,16 +251,16 @@ struct AppInstallDataCommand: AsyncParsableCommand {
         abstract: "Install an .xcappdata package, replacing the app's data container."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Path to the .xcappdata package.")
+    @Option(name: .long, help: "Path to the .xcappdata package.")
     var path: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.installAppData(udid: resolved.udid, path: path)
             CLIRuntime.ui.success("Installed app data on \(resolved.name).")
         }
