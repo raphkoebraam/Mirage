@@ -430,6 +430,20 @@ struct SimctlTests {
         expectLast(["runtime", "list"])
     }
 
+    @Test("runtime images requests JSON and parses installed builds")
+    func runtimeImages() throws {
+        runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
+
+        let images = try simctl.runtimeImages()
+
+        expectLast(["runtime", "list", "-j"])
+        #expect(images.count == 2)
+        let ios = try #require(images.first { $0.build == "23F77" })
+        #expect(ios.version == "26.5")
+        #expect(ios.runtimeIdentifier == "com.apple.CoreSimulator.SimRuntime.iOS-26-5")
+        #expect(ios.state == "Ready")
+    }
+
     @Test func runtimeDelete() throws {
         try simctl.runtimeDelete(identifier: "ABC")
         expectLast(["runtime", "delete", "ABC"])
