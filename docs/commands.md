@@ -1001,16 +1001,16 @@ $ mirage runtime available --platform iOS
 Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5 to 10 GB) and stream progress. The version is checked against Apple's catalog first: `17` means 17.0, an already installed build is reported instead of re-downloaded, and an unknown version lists what is available.
 
 ```
-mirage runtime install <platform> [--version <version>]
+mirage runtime install --platform <platform> [--version <version>]
 ```
 
 Argument | Description
 --- | ---
-`<platform>` | Platform: iOS, watchOS, tvOS, or visionOS.
+`--platform <platform>` | Platform: iOS, watchOS, tvOS, or visionOS.
 `--version <version>` | Runtime version (e.g. 26.2). Latest when omitted.
 
 ```console
-$ mirage runtime install iOS --version 26.2
+$ mirage runtime install --platform iOS --version 26.2
 ```
 
 ## runtime uninstall

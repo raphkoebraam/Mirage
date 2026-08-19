@@ -238,7 +238,7 @@ struct AdvancedCommandTests {
     }
 
     /// Stubs the catalog download and the installed-image listing that
-    /// `runtime install <platform> <version>` consults before xcodebuild.
+    /// `runtime install --platform --version` consults before xcodebuild.
     private func stubCatalog() {
         harness.runner.stub(stdout: RuntimeFixtures.downloadableIndexPlist)
         harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
@@ -250,7 +250,7 @@ struct AdvancedCommandTests {
         harness.runner.stubInteractive(exitCode: 0)
 
         // "27" means 27.0; the catalog's 27.0 entry is a release candidate.
-        try await harness.run(["runtime", "install", "iOS", "--version", "27"])
+        try await harness.run(["runtime", "install", "--platform", "iOS", "--version", "27"])
 
         #expect(harness.runner.lastCommand?.arguments == [
             "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "27.0",
@@ -262,7 +262,7 @@ struct AdvancedCommandTests {
     func runtimeInstallUnknownVersion() async throws {
         stubCatalog()
 
-        let exit = try await harness.runExpectingExit(["runtime", "install", "iOS", "--version", "17"])
+        let exit = try await harness.runExpectingExit(["runtime", "install", "--platform", "iOS", "--version", "17"])
 
         #expect(exit == ExitCode(1))
         let message = try #require(harness.ui.errorMessages.first)
@@ -277,7 +277,7 @@ struct AdvancedCommandTests {
     func runtimeInstallAlreadyInstalled() async throws {
         stubCatalog()
 
-        try await harness.run(["runtime", "install", "iOS", "--version", "26.5"])
+        try await harness.run(["runtime", "install", "--platform", "iOS", "--version", "26.5"])
 
         #expect(!harness.runner.executed.contains { $0.arguments.first == "xcodebuild" })
         #expect(harness.ui.events.contains { event in
@@ -291,7 +291,7 @@ struct AdvancedCommandTests {
         harness.runner.stub(stderr: "curl: (6) Could not resolve host", exitCode: 6)
         harness.runner.stubInteractive(exitCode: 0)
 
-        try await harness.run(["runtime", "install", "iOS", "--version", "26.2"])
+        try await harness.run(["runtime", "install", "--platform", "iOS", "--version", "26.2"])
 
         #expect(harness.runner.lastCommand?.arguments == [
             "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "26.2",
@@ -303,7 +303,7 @@ struct AdvancedCommandTests {
     func runtimeInstallLatest() async throws {
         harness.runner.stubInteractive(exitCode: 0)
 
-        try await harness.run(["runtime", "install", "ios"])
+        try await harness.run(["runtime", "install", "--platform", "ios"])
 
         #expect(harness.runner.executed.count == 1)
         #expect(harness.runner.lastCommand?.arguments == ["xcodebuild", "-downloadPlatform", "iOS"])
@@ -312,7 +312,7 @@ struct AdvancedCommandTests {
     @Test("runtime install rejects unknown platforms")
     func runtimeInstallUnknownPlatform() async throws {
         await #expect(throws: (any Error).self) {
-            try await harness.run(["runtime", "install", "android"])
+            try await harness.run(["runtime", "install", "--platform", "android"])
         }
         #expect(harness.runner.executed.isEmpty)
     }

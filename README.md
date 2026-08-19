@@ -98,7 +98,7 @@ $ mirage app launch --bundle-id com.example.app --console
 $ mirage statusbar demo              # 9:41, full battery, full bars
 $ mirage push --bundle-id com.example.app --message "Hello!"
 $ mirage runtime available            # what Apple offers, and what is already installed
-$ mirage runtime install iOS --version 26.2
+$ mirage runtime install --platform iOS --version 26.2
 ```
 
 And every command answers `--help`.

@@ -145,7 +145,7 @@ struct RuntimeInstallCommand: AsyncParsableCommand {
         }
     }
 
-    @Argument(help: "Platform: iOS, watchOS, tvOS, or visionOS.")
+    @Option(name: .long, help: "Platform: iOS, watchOS, tvOS, or visionOS.")
     var platform: String
 
     @Option(name: .long, help: "Runtime version (e.g. 26.2). Latest when omitted.")

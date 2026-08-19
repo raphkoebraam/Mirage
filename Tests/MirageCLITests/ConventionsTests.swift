@@ -23,7 +23,7 @@ struct PositionalConventionsTests {
     /// value is a named option so invocations read unambiguously.
     static let allowedPositionals: Set<String> = [
         "<device>", "<devices>", "<watch>", "<phone>", "<source>", "<destination>",
-        "<pair>", "<shell>", "<identifier>", "<platform>",
+        "<pair>", "<shell>", "<identifier>",
         // Pass-through argument lists after "--".
         "<app-arguments>", "<executable-arguments>",
     ]
