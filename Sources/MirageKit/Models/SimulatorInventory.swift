@@ -44,7 +44,7 @@ public struct SimulatorInventory: Equatable, Sendable {
             runtime.isAvailable && (
                 runtime.identifier == query
                     || runtime.name.caseInsensitiveCompare(query) == .orderedSame
-                    || runtime.version == query
+                    || DeviceResolver.versionsEqual(runtime.version, query)
             )
         }
     }

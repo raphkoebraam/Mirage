@@ -7,6 +7,7 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 ### Added
 
 - **`mirage runtime available`** lists the simulator runtimes Apple offers for download (from the catalog Xcode's Components pane reads), marks the builds already installed, and supports `--platform`, `--prerelease`, and `--json`.
+- **Major-only runtime versions resolve directly.** `--runtime 18` now means iOS 18.0 when that release is installed (likewise `18.4.0` for 18.4), without the "did you mean" prompt. The prompt still covers real near-misses.
 
 ### Fixed
 

@@ -134,7 +134,7 @@ public struct DeviceResolver: Sendable {
             return runtime
         }
 
-        let byVersion = available.filter { $0.version == query }
+        let byVersion = available.filter { Self.versionsEqual($0.version, query) }
         switch byVersion.count {
         case 0:
             throw ResolutionError.runtimeNotFound(query: query)
@@ -248,6 +248,22 @@ public struct DeviceResolver: Sendable {
 
     /// "18" matches 18.x; "18.4" matches 18.4.y; "1" matches nothing —
     /// whole leading segments only.
+    /// Version equality modulo trailing zero segments: "18", "18.0", and
+    /// "18.0.0" all name the same release. Non-numeric inputs never match.
+    public static func versionsEqual(_ lhs: String, _ rhs: String) -> Bool {
+        func segments(_ version: String) -> [Int]? {
+            let parsed = version.split(separator: ".").map { Int($0) }
+            guard !parsed.isEmpty, parsed.allSatisfy({ $0 != nil }) else { return nil }
+            var values = parsed.map { $0! }
+            while values.count > 1, values.last == 0 {
+                values.removeLast()
+            }
+            return values
+        }
+        guard let left = segments(lhs), let right = segments(rhs) else { return false }
+        return left == right
+    }
+
     public static func versionFamilyMatches(query: String, version: String) -> Bool {
         let querySegments = query.split(separator: ".").map { Int($0) }
         let versionSegments = version.split(separator: ".").map { Int($0) }

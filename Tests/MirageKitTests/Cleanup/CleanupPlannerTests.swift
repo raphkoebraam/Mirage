@@ -245,6 +245,12 @@ struct RuntimeMatchingTests {
         ])
     }
 
+    @Test("a major-only version matches its .0 release")
+    func byMajorOnlyVersion() {
+        let matches = inventory.runtimes(matching: "18")
+        #expect(matches.map(\.identifier) == ["com.apple.CoreSimulator.SimRuntime.iOS-18-0"])
+    }
+
     @Test("matches by display name, case-insensitively")
     func byName() {
         let matches = inventory.runtimes(matching: "ios 18.4")
