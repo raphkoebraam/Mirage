@@ -112,6 +112,19 @@ Mirage is built to behave well in scripts and CI:
 - **Data goes to stdout, decoration doesn't.** UDIDs, paths, and pasteboard contents print plainly so pipes stay clean; spinners and alerts are kept out of the way.
 - **`MIRAGE_DEVICE_SET=/path`** routes every simctl call through `--set`, giving CI jobs an isolated CoreSimulator device set that never touches your personal simulators.
 
+## Troubleshooting
+
+### A simulator is missing from Xcode's destination menu
+
+Things to check, in order:
+
+1. Open the destination menu in Xcode's toolbar and clear the **Filter** field at the top; a leftover filter hides everything that does not match.
+2. Choose **Manage Run Destinations...** at the bottom of that menu, or open Window > Devices and Simulators > Simulators. Each simulator has a **Show run destination** setting: **Automatic** (the default) lets Xcode decide whether to offer it, **Always** forces it into the menu, **Never** hides it.
+3. The menu only lists simulators the active scheme can run: the platform must match and the runtime must satisfy the target's deployment target. `mirage list` shows each device's runtime.
+4. If Xcode still shows a device that was deleted, or hides one that exists, restart Xcode; it caches the device list.
+
+`mirage cleanup` keeps the most recently used copy of a duplicate (then the one with the most data), so the device you were working with survives.
+
 ## Development
 
 ```bash

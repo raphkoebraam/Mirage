@@ -8,9 +8,10 @@ struct CleanupCommand: AsyncParsableCommand {
         abstract: "Slim down the simulator roster.",
         discussion: """
         Removes unavailable devices (their runtime is gone) and duplicates \
-        (same name, type, and runtime — a booted copy is kept, else the one \
-        with the most data). Booted devices and watch-pair members are never \
-        touched. The plan is shown before anything is deleted.
+        (same name, type, and runtime — a booted copy is kept, else the most \
+        recently used one, else the one with the most data). Booted devices \
+        and watch-pair members are never touched. The plan is shown before \
+        anything is deleted.
         """
     )
 
