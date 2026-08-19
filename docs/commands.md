@@ -73,7 +73,7 @@ Every Mirage command, generated from the binary's own `--help` output so nothing
 [runtime list](#runtime-list) ·
 [runtime available](#runtime-available) ·
 [runtime install](#runtime-install) ·
-[runtime delete](#runtime-delete) ·
+[runtime uninstall](#runtime-uninstall) ·
 [diagnose](#diagnose) ·
 [spawn](#spawn) ·
 [completions](#completions)
@@ -982,12 +982,12 @@ Argument | Description
 $ mirage runtime install iOS 26.2
 ```
 
-## runtime delete
+## runtime uninstall
 
-Delete a runtime disk image ('all' deletes every image).
+Uninstall a runtime disk image ('all' removes every image). `runtime delete` remains an alias.
 
 ```
-mirage runtime delete <identifier> [--yes]
+mirage runtime uninstall <identifier> [--yes]
 ```
 
 Argument | Description
@@ -996,7 +996,7 @@ Argument | Description
 `-y, --yes` | Skip the confirmation prompt.
 
 ```console
-$ mirage runtime delete 18
+$ mirage runtime uninstall 18
 ```
 
 ## diagnose

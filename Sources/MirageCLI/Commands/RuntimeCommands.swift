@@ -10,7 +10,7 @@ struct RuntimeCommand: AsyncParsableCommand {
             RuntimeListCommand.self,
             RuntimeAvailableCommand.self,
             RuntimeInstallCommand.self,
-            RuntimeDeleteCommand.self,
+            RuntimeUninstallCommand.self,
         ]
     )
 }
@@ -231,10 +231,11 @@ struct RuntimeInstallCommand: AsyncParsableCommand {
     }
 }
 
-struct RuntimeDeleteCommand: AsyncParsableCommand {
+struct RuntimeUninstallCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "delete",
-        abstract: "Delete a runtime disk image ('all' deletes every image)."
+        commandName: "uninstall",
+        abstract: "Uninstall a runtime disk image ('all' removes every image).",
+        aliases: ["delete"]
     )
 
     @Argument(help: "Runtime version ('18' means 18.0), build, image identifier, or 'all'.")

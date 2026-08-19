@@ -283,12 +283,12 @@ struct AdvancedCommandTests {
         #expect(harness.runner.executed.isEmpty)
     }
 
-    @Test("runtime delete resolves a version to the installed image and confirms")
-    func runtimeDelete() async throws {
+    @Test("runtime uninstall resolves a version to the installed image and confirms")
+    func runtimeUninstall() async throws {
         harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
         harness.ui.answerConfirm(true)
 
-        try await harness.run(["runtime", "delete", "26.5"])
+        try await harness.run(["runtime", "uninstall", "26.5"])
 
         #expect(harness.lastArguments == ["runtime", "delete", "F5C0D8C6-39E5-42F6-A211-22892CFF099C"])
         #expect(harness.ui.events.contains { event in
@@ -297,8 +297,8 @@ struct AdvancedCommandTests {
         })
     }
 
-    @Test("runtime delete accepts a build or an image identifier")
-    func runtimeDeleteByBuild() async throws {
+    @Test("runtime delete stays as an alias of uninstall")
+    func runtimeUninstallByBuildViaAlias() async throws {
         harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
 
         try await harness.run(["runtime", "delete", "23T239", "--yes"])
@@ -306,11 +306,11 @@ struct AdvancedCommandTests {
         #expect(harness.lastArguments == ["runtime", "delete", "7FA94CC6-EA5D-4069-ADF8-17BC943A0CC2"])
     }
 
-    @Test("runtime delete lists installed images when nothing matches")
-    func runtimeDeleteUnknown() async throws {
+    @Test("runtime uninstall lists installed images when nothing matches")
+    func runtimeUninstallUnknown() async throws {
         harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
 
-        let exit = try await harness.runExpectingExit(["runtime", "delete", "18"])
+        let exit = try await harness.runExpectingExit(["runtime", "uninstall", "18"])
 
         #expect(exit == ExitCode(1))
         let message = try #require(harness.ui.errorMessages.first)
@@ -322,11 +322,11 @@ struct AdvancedCommandTests {
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
     }
 
-    @Test("runtime delete all skips resolution and deletes every image")
-    func runtimeDeleteAll() async throws {
+    @Test("runtime uninstall all skips resolution and removes every image")
+    func runtimeUninstallAll() async throws {
         harness.ui.answerConfirm(true)
 
-        try await harness.run(["runtime", "delete", "all"])
+        try await harness.run(["runtime", "uninstall", "all"])
 
         #expect(harness.runner.executed.count == 1)
         #expect(harness.lastArguments == ["runtime", "delete", "all"])
