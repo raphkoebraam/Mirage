@@ -108,24 +108,24 @@ struct MediaAddCommand: AsyncParsableCommand {
         abstract: "Add photos, live photos, videos, or contacts."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Files to add.")
-    var paths: [String]
+    @Option(name: .long, parsing: .upToNextOption, help: "Files to add (repeatable, or several after one --path).")
+    var path: [String] = []
 
     func validate() throws {
-        guard !paths.isEmpty else {
-            throw ValidationError("Provide at least one file.")
+        guard !path.isEmpty else {
+            throw ValidationError("Provide at least one file with --path.")
         }
     }
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
-            try simctl.addMedia(udid: resolved.udid, paths: paths)
-            CLIRuntime.ui.success("Added \(paths.count) item(s) to \(resolved.name).")
+            let resolved = try simctl.resolvedTarget(device)
+            try simctl.addMedia(udid: resolved.udid, paths: path)
+            CLIRuntime.ui.success("Added \(path.count) item(s) to \(resolved.name).")
         }
     }
 }

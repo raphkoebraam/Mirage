@@ -8,16 +8,16 @@ struct OpenCommand: AsyncParsableCommand {
         abstract: "Open a URL on a simulator (https, deep links, etc.)."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "The URL to open.")
+    @Option(name: .long, help: "The URL to open.")
     var url: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.openURL(udid: resolved.udid, url: url)
             CLIRuntime.ui.success("Opened \(url) on \(resolved.name).")
         }
@@ -28,17 +28,17 @@ struct PushCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "push",
         abstract: "Send a simulated push notification.",
-        discussion: "Without a payload file the JSON payload is read from stdin. "
-            + "The payload may embed 'Simulator Target Bundle' instead of passing a bundle id."
+        discussion: "Without --payload, --message, or --json-payload the JSON payload is read from stdin. "
+            + "The payload may embed 'Simulator Target Bundle' instead of passing --bundle-id."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Target app's bundle identifier.")
+    @Option(name: .long, help: "Target app's bundle identifier.")
     var bundleID: String?
 
-    @Argument(help: "Path to the APNS JSON payload (stdin when omitted).")
+    @Option(name: .long, help: "Path to the APNS JSON payload file.")
     var payload: String?
 
     @Option(name: .long, help: "Shortcut: send a plain alert with this text (no payload file needed).")
@@ -50,14 +50,14 @@ struct PushCommand: AsyncParsableCommand {
     func validate() throws {
         let sources = [payload != nil, message != nil, jsonPayload != nil].count(where: { $0 })
         guard sources <= 1 else {
-            throw ValidationError("Provide at most one of: a payload file, --message, or --json-payload.")
+            throw ValidationError("Provide at most one of --payload, --message, or --json-payload.")
         }
     }
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
 
             try simctl.push(udid: resolved.udid, bundleID: bundleID, payloadPath: resolvePayloadPath())
             CLIRuntime.ui.success("Push delivered to \(resolved.name).")
@@ -93,43 +93,86 @@ struct PrivacyCommand: AsyncParsableCommand {
         commandName: "privacy",
         abstract: "Grant, revoke, or reset privacy permissions.",
         discussion: "Services: all, calendar, contacts, contacts-limited, location, "
-            + "location-always, photos, photos-add, media-library, microphone, motion, reminders, siri."
+            + "location-always, photos, photos-add, media-library, microphone, motion, reminders, siri.",
+        subcommands: [
+            PrivacyGrantCommand.self,
+            PrivacyRevokeCommand.self,
+            PrivacyResetCommand.self,
+        ]
+    )
+}
+
+struct PrivacyGrantCommand: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "grant",
+        abstract: "Grant a privacy permission to an app."
     )
 
-    enum Action: String, ExpressibleByArgument, CaseIterable {
-        case grant, revoke, reset
-    }
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Action: grant, revoke, or reset.")
-    var action: Action
-
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
-
-    @Argument(help: "The privacy service to modify.")
+    @Option(name: .long, help: "The privacy service to grant (see `mirage privacy --help`).")
     var service: String
 
-    @Argument(help: "Target app's bundle identifier (required for grant/revoke).")
-    var bundleID: String?
-
-    func validate() throws {
-        if action != .reset, bundleID == nil {
-            throw ValidationError("\(action.rawValue) requires a bundle identifier.")
-        }
-    }
+    @Option(name: .long, help: "Target app's bundle identifier.")
+    var bundleID: String
 
     func run() async throws {
-        try await withErrorPresentation {
-            let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
-            let simctlAction: Simctl.PrivacyAction = switch action {
-            case .grant: .grant
-            case .revoke: .revoke
-            case .reset: .reset
-            }
-            try simctl.privacy(udid: resolved.udid, action: simctlAction, service: service, bundleID: bundleID)
-            CLIRuntime.ui.success("\(action.rawValue) \(service) for \(bundleID ?? "all apps") on \(resolved.name).")
-        }
+        try await applyPrivacy(.grant, device: device, service: service, bundleID: bundleID)
+    }
+}
+
+struct PrivacyRevokeCommand: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "revoke",
+        abstract: "Revoke a privacy permission from an app."
+    )
+
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
+
+    @Option(name: .long, help: "The privacy service to revoke (see `mirage privacy --help`).")
+    var service: String
+
+    @Option(name: .long, help: "Target app's bundle identifier.")
+    var bundleID: String
+
+    func run() async throws {
+        try await applyPrivacy(.revoke, device: device, service: service, bundleID: bundleID)
+    }
+}
+
+struct PrivacyResetCommand: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "reset",
+        abstract: "Reset a privacy permission, for one app or for all apps."
+    )
+
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
+
+    @Option(name: .long, help: "The privacy service to reset ('all' for every service).")
+    var service: String
+
+    @Option(name: .long, help: "Target app's bundle identifier; omit to reset every app.")
+    var bundleID: String?
+
+    func run() async throws {
+        try await applyPrivacy(.reset, device: device, service: service, bundleID: bundleID)
+    }
+}
+
+private func applyPrivacy(
+    _ action: Simctl.PrivacyAction,
+    device: String?,
+    service: String,
+    bundleID: String?
+) async throws {
+    try await withErrorPresentation {
+        let simctl = CLIRuntime.simctl
+        let resolved = try simctl.resolvedTarget(device)
+        try simctl.privacy(udid: resolved.udid, action: action, service: service, bundleID: bundleID)
+        CLIRuntime.ui.success("\(action.rawValue) \(service) for \(bundleID ?? "all apps") on \(resolved.name).")
     }
 }
 
@@ -297,11 +340,14 @@ struct UIAppearanceCommand: AsyncParsableCommand {
         abstract: "Get or set light/dark appearance."
     )
 
-    @Argument(help: "Optional device, optional value (light or dark): [<device>] [<value>].")
-    var arguments: [String] = []
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
+
+    @Option(name: .long, help: "New value: light or dark. Omit to print the current value.")
+    var set: String?
 
     func run() async throws {
-        try await runUIOption(option: "appearance", knownValues: ["light", "dark"], arguments: arguments)
+        try await runUIOption(option: "appearance", knownValues: ["light", "dark"], device: device, value: set)
     }
 }
 
@@ -311,7 +357,7 @@ struct UIContentSizeCommand: AsyncParsableCommand {
         abstract: "Get or set the preferred content size category."
     )
 
-    static let sizes: Set<String> = [
+    static let sizes: [String] = [
         "extra-small", "small", "medium", "large", "extra-large",
         "extra-extra-large", "extra-extra-extra-large",
         "accessibility-medium", "accessibility-large", "accessibility-extra-large",
@@ -319,11 +365,14 @@ struct UIContentSizeCommand: AsyncParsableCommand {
         "increment", "decrement",
     ]
 
-    @Argument(help: "Optional device, optional value (a size category, increment, or decrement): [<device>] [<value>].")
-    var arguments: [String] = []
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
+
+    @Option(name: .long, help: "New value: a size category, increment, or decrement. Omit to print the current value.")
+    var set: String?
 
     func run() async throws {
-        try await runUIOption(option: "content_size", knownValues: Self.sizes, arguments: arguments)
+        try await runUIOption(option: "content_size", knownValues: Self.sizes, device: device, value: set)
     }
 }
 
@@ -333,42 +382,34 @@ struct UIIncreaseContrastCommand: AsyncParsableCommand {
         abstract: "Get or set Increase Contrast mode."
     )
 
-    @Argument(help: "Optional device, optional value (enabled or disabled): [<device>] [<value>].")
-    var arguments: [String] = []
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
+
+    @Option(name: .long, help: "New value: enabled or disabled. Omit to print the current value.")
+    var set: String?
 
     func run() async throws {
         try await runUIOption(
             option: "increase_contrast",
             knownValues: ["enabled", "disabled"],
-            arguments: arguments
+            device: device,
+            value: set
         )
     }
 }
 
-/// The ui subcommands take an optional device and an optional value, and
-/// either may be omitted: a lone argument that is a known value ("dark")
-/// targets the booted simulator; anything else is a device query (a get).
-private func runUIOption(option: String, knownValues: Set<String>, arguments: [String]) async throws {
+/// The ui subcommands read the option when --set is absent and write it
+/// otherwise, rejecting values simctl would not accept.
+private func runUIOption(option: String, knownValues: [String], device: String?, value: String?) async throws {
     try await withErrorPresentation {
-        guard arguments.count <= 2 else {
-            throw MirageCLIError("Expected at most a device and a value, got: \(arguments.joined(separator: " ")).")
-        }
-
-        let deviceQuery: String?
-        let value: String?
-        switch arguments.count {
-        case 0:
-            (deviceQuery, value) = (nil, nil)
-        case 1 where knownValues.contains(arguments[0].lowercased()):
-            (deviceQuery, value) = (nil, arguments[0])
-        case 1:
-            (deviceQuery, value) = (arguments[0], nil)
-        default:
-            (deviceQuery, value) = (arguments[0], arguments[1])
+        if let value, !knownValues.contains(value.lowercased()) {
+            throw MirageCLIError(
+                "'\(value)' is not a valid \(option) value. Use one of: \(knownValues.joined(separator: ", "))."
+            )
         }
 
         let simctl = CLIRuntime.simctl
-        let resolved = try simctl.resolvedTarget(deviceQuery)
+        let resolved = try simctl.resolvedTarget(device)
         if let value {
             try simctl.setUIOption(udid: resolved.udid, option: option, value: value)
             CLIRuntime.ui.success("Set \(option) to \(value) on \(resolved.name).")
