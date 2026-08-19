@@ -330,6 +330,13 @@ public struct Simctl: Sendable {
         try runner.runChecked(command(["runtime", "list"])).standardOutput
     }
 
+    /// Installed runtime disk images with their builds, for matching
+    /// against the download catalog.
+    public func runtimeImages() throws -> [RuntimeImage] {
+        let output = try runner.runChecked(command(["runtime", "list", "-j"]))
+        return try RuntimeImage.parse(json: output.standardOutput)
+    }
+
     public func runtimeDelete(identifier: String) throws {
         try runner.runChecked(command(["runtime", "delete", identifier]))
     }

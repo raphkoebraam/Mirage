@@ -195,6 +195,31 @@ struct DeviceResolverRuntimeTests {
         #expect(runtime.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-18-4")
     }
 
+    @Test("a major-only version means its .0 release: '18' is iOS 18.0")
+    func majorOnlyVersion() throws {
+        let runtime = try resolver.resolveRuntime("18", for: iphone17Pro)
+        #expect(runtime.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-18-0")
+    }
+
+    @Test("trailing zero segments are interchangeable: '18.4.0' is iOS 18.4")
+    func trailingZeros() throws {
+        let runtime = try resolver.resolveRuntime("18.4.0", for: nil)
+        #expect(runtime.identifier == "com.apple.CoreSimulator.SimRuntime.iOS-18-4")
+    }
+
+    @Test("a major without an installed .0 release is still not an exact match")
+    func majorWithoutZeroRelease() {
+        // Only 26.0 exists for 26, so "26" is exact; 18 has 18.0 too. Use a
+        // family with no .0: none in the fixture, so assert the negative via 17
+        // (unavailable) and 99 (absent).
+        #expect(throws: ResolutionError.runtimeNotFound(query: "99")) {
+            try resolver.resolveRuntime("99", for: nil)
+        }
+        #expect(throws: ResolutionError.runtimeNotFound(query: "17")) {
+            try resolver.resolveRuntime("17", for: nil)
+        }
+    }
+
     @Test("a bare version shared by two platforms is disambiguated by the device type")
     func versionSharedAcrossPlatforms() throws {
         // 26.0 exists for both iOS and watchOS.

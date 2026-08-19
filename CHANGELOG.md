@@ -4,12 +4,19 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+
+- **`mirage runtime available`** lists the simulator runtimes Apple offers for download (from the catalog Xcode's Components pane reads), marks the builds already installed, and supports `--platform`, `--prerelease`, and `--json`.
+- **`mirage runtime install` checks the catalog first.** The version is resolved against Apple's list (`17` means 17.0), an already installed build is reported instead of re-downloaded, and an unknown version fails with the available releases instead of xcodebuild's bare "not available" message. Offline, the request is passed to xcodebuild unchanged.
+- **Major-only runtime versions resolve directly.** `--runtime 18` now means iOS 18.0 when that release is installed (likewise `18.4.0` for 18.4), without the "did you mean" prompt. The prompt still covers real near-misses.
+
 ### Fixed
 
 - `mirage doctor` referred to `mirage du`, a command that no longer exists; it now points at `mirage disk-usage`.
 
 ### Changed
 
+- **`runtime delete` is now `runtime uninstall`** (pairing with `runtime install`; `delete` remains an alias) and resolves versions, builds, and identifiers: `mirage runtime uninstall 18` removes the iOS 18.0 image, the confirmation names the image, an ambiguous version asks for a build, and an unknown query lists the installed images instead of simctl's bare "No matching images found".
 - **`cleanup` keeps the most recently used duplicate** (after a booted one), falling back to the largest copy only when neither twin has been used. The device Xcode's destination menu prefers now survives a cleanup.
 - **`create` and `cleanup` point at Xcode's destination settings** in interactive runs (the Filter field and "Manage Run Destinations..." in the destination menu) when a simulator seems to be missing from Xcode. The README gained a troubleshooting section for this.
 

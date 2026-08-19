@@ -71,8 +71,9 @@ Every Mirage command, generated from the binary's own `--help` output so nothing
 [unpair](#unpair) ·
 [pair-activate](#pair-activate) ·
 [runtime list](#runtime-list) ·
+[runtime available](#runtime-available) ·
 [runtime install](#runtime-install) ·
-[runtime delete](#runtime-delete) ·
+[runtime uninstall](#runtime-uninstall) ·
 [diagnose](#diagnose) ·
 [spawn](#spawn) ·
 [completions](#completions)
@@ -946,9 +947,27 @@ List runtime disk images.
 mirage runtime list
 ```
 
+## runtime available
+
+List simulator runtimes Apple offers for download. Reads the same catalog Xcode's Components pane uses and marks the builds already installed. Install one with `mirage runtime install`.
+
+```
+mirage runtime available [--platform <platform>] [--prerelease] [--json]
+```
+
+Option | Description
+--- | ---
+`--platform <platform>` | Only this platform: iOS, watchOS, tvOS, or visionOS.
+`--prerelease` | Include betas and release candidates.
+`--json` | Emit JSON instead of a table.
+
+```console
+$ mirage runtime available --platform iOS
+```
+
 ## runtime install
 
-Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5–10 GB) and stream progress.
+Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5 to 10 GB) and stream progress. The version is checked against Apple's catalog first: `17` means 17.0, an already installed build is reported instead of re-downloaded, and an unknown version lists what is available.
 
 ```
 mirage runtime install <platform> [<version>]
@@ -963,18 +982,23 @@ Argument | Description
 $ mirage runtime install iOS 26.2
 ```
 
-## runtime delete
+## runtime uninstall
 
-Delete a runtime disk image ('all' deletes every image).
+Uninstall a runtime disk image ('all' removes every image). `runtime delete` remains an alias.
 
 ```
-mirage runtime delete <identifier> [--yes]
+mirage runtime uninstall [<identifier>] [--version <version>] [--yes]
 ```
 
 Argument | Description
 --- | ---
-`<identifier>` | Runtime image identifier (from `mirage runtime list`) or 'all'.
+`<identifier>` | Runtime version ('18' means 18.0), build, image identifier, or 'all'.
+`--version <version>` | Runtime version to uninstall (same as passing it as the argument).
 `-y, --yes` | Skip the confirmation prompt.
+
+```console
+$ mirage runtime uninstall 18
+```
 
 ## diagnose
 

@@ -162,22 +162,37 @@ struct CreateCloneDeleteRenameTests {
         #expect(harness.lastArguments?[2] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro")
     }
 
+    @Test("a major-only runtime version resolves to its .0 release without prompting")
+    func createMajorOnlyRuntime() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
+
+        #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
+        #expect(harness.lastArguments == [
+            "create", "Test",
+            "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
+        ])
+    }
+
     @Test("a near-miss runtime asks 'did you mean' and proceeds on yes")
     func createRuntimeSuggestionAccepted() async throws {
         harness.stubInventory()
         harness.ui.answerConfirm(true)
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
+        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3"])
 
         #expect(harness.ui.events.contains { event in
-            if case let .confirm(question) = event { return question.contains("iOS 18.0") }
+            if case let .confirm(question) = event { return question.contains("iOS 18.4") }
             return false
         })
         #expect(harness.lastArguments == [
             "create", "Test",
             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
-            "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
         ])
     }
 
@@ -187,7 +202,7 @@ struct CreateCloneDeleteRenameTests {
         harness.ui.answerConfirm(false)
 
         let exit = try await harness.runExpectingExit([
-            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18",
+            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
         ])
 
         #expect(exit == ExitCode(1))
@@ -200,11 +215,11 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
 
         let exit = try await harness.runExpectingExit([
-            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18",
+            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
         ])
 
         #expect(exit == ExitCode(1))
-        #expect(harness.ui.errorMessages.first?.contains("iOS 18.0") == true)
+        #expect(harness.ui.errorMessages.first?.contains("iOS 18.4") == true)
     }
 
     @Test("an incompatible family redirects to the closest runtime that works")
@@ -214,7 +229,7 @@ struct CreateCloneDeleteRenameTests {
         harness.runner.stub(stdout: "NEW-UDID\n")
 
         // 18.x exists but cannot run the iPad in this fixture.
-        try await harness.run(["create", "Test", "--type", "ipad", "--runtime", "18"])
+        try await harness.run(["create", "Test", "--type", "ipad", "--runtime", "18.3"])
 
         #expect(harness.ui.events.contains { event in
             if case let .confirm(question) = event {
@@ -231,17 +246,17 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18", "--yes"])
+        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3", "--yes"])
 
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
         #expect(harness.ui.events.contains { event in
-            if case let .info(message) = event { return message.contains("iOS 18.0") }
+            if case let .info(message) = event { return message.contains("iOS 18.4") }
             return false
         })
         #expect(harness.lastArguments == [
             "create", "Test",
             "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
-            "com.apple.CoreSimulator.SimRuntime.iOS-18-0",
+            "com.apple.CoreSimulator.SimRuntime.iOS-18-4",
         ])
     }
 
