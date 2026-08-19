@@ -992,8 +992,12 @@ mirage runtime delete <identifier> [--yes]
 
 Argument | Description
 --- | ---
-`<identifier>` | Runtime image identifier (from `mirage runtime list`) or 'all'.
+`<identifier>` | Runtime version ('18' means 18.0), build, image identifier, or 'all'.
 `-y, --yes` | Skip the confirmation prompt.
+
+```console
+$ mirage runtime delete 18
+```
 
 ## diagnose
 

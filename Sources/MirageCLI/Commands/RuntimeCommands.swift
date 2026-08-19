@@ -237,7 +237,7 @@ struct RuntimeDeleteCommand: AsyncParsableCommand {
         abstract: "Delete a runtime disk image ('all' deletes every image)."
     )
 
-    @Argument(help: "Runtime image identifier (from `mirage runtime list`) or 'all'.")
+    @Argument(help: "Runtime version ('18' means 18.0), build, image identifier, or 'all'.")
     var identifier: String
 
     @Flag(name: .shortAndLong, help: "Skip the confirmation prompt.")
@@ -246,9 +246,65 @@ struct RuntimeDeleteCommand: AsyncParsableCommand {
     func run() async throws {
         try await withErrorPresentation {
             let ui = CLIRuntime.ui
-            try confirmDestructive("Delete runtime image \(identifier)?", ui: ui, skip: yes)
-            try CLIRuntime.simctl.runtimeDelete(identifier: identifier)
-            ui.success("Deleted runtime image \(identifier).")
+            let simctl = CLIRuntime.simctl
+
+            if identifier == "all" {
+                try confirmDestructive("Delete ALL runtime images?", ui: ui, skip: yes)
+                try simctl.runtimeDelete(identifier: "all")
+                ui.success("Deleted all runtime images.")
+                return
+            }
+
+            let image = try resolveImage(identifier, among: simctl.runtimeImages())
+            let name = displayName(of: image)
+            try confirmDestructive("Delete runtime image \(name)?", ui: ui, skip: yes)
+            try simctl.runtimeDelete(identifier: image.identifier)
+            ui.success("Deleted runtime image \(name).")
         }
+    }
+
+    /// simctl only accepts image identifiers or builds; a bare version like
+    /// "18" would confirm and then fail. Resolve first so the prompt names
+    /// the image and a miss lists what is installed.
+    private func resolveImage(_ query: String, among images: [RuntimeImage]) throws -> RuntimeImage {
+        let matches = images.filter { image in
+            image.identifier.caseInsensitiveCompare(query) == .orderedSame
+                || image.build.caseInsensitiveCompare(query) == .orderedSame
+                || DeviceResolver.versionsEqual(image.version, query)
+        }
+        switch matches.count {
+        case 1:
+            return matches[0]
+        case 0:
+            var lines = ["No installed runtime image matches '\(query)'."]
+            if !images.isEmpty {
+                let sorted = images.sorted { lhs, rhs in
+                    let lhsName = displayName(of: lhs)
+                    let rhsName = displayName(of: rhs)
+                    let lhsPlatform = lhsName.prefix { !$0.isWhitespace }
+                    let rhsPlatform = rhsName.prefix { !$0.isWhitespace }
+                    if lhsPlatform != rhsPlatform { return lhsPlatform < rhsPlatform }
+                    return lhs.version.compare(rhs.version, options: .numeric) == .orderedDescending
+                }
+                lines.append("Installed images: \(sorted.map(displayName(of:)).joined(separator: ", ")).")
+            }
+            throw MirageCLIError(lines.joined(separator: "\n"))
+        default:
+            let candidates = matches.map(displayName(of:)).joined(separator: ", ")
+            throw MirageCLIError("'\(query)' matches several images: \(candidates). Pass a build instead.")
+        }
+    }
+
+    /// "iOS 26.5 (23F77)", derived from the simulator platform identifier.
+    private func displayName(of image: RuntimeImage) -> String {
+        let platform = switch image.platformIdentifier {
+        case "com.apple.platform.iphonesimulator": "iOS"
+        case "com.apple.platform.watchsimulator": "watchOS"
+        case "com.apple.platform.appletvsimulator": "tvOS"
+        case "com.apple.platform.xrsimulator": "visionOS"
+        default: image.platformIdentifier ?? ""
+        }
+        let name = [platform, image.version].filter { !$0.isEmpty }.joined(separator: " ")
+        return "\(name) (\(image.build))"
     }
 }

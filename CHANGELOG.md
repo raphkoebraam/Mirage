@@ -16,6 +16,7 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 
 ### Changed
 
+- **`runtime delete` resolves versions, builds, and identifiers.** `mirage runtime delete 18` deletes the iOS 18.0 image, the confirmation names the image, an ambiguous version asks for a build, and an unknown query lists the installed images instead of simctl's bare "No matching images found".
 - **`cleanup` keeps the most recently used duplicate** (after a booted one), falling back to the largest copy only when neither twin has been used. The device Xcode's destination menu prefers now survives a cleanup.
 - **`create` and `cleanup` point at Xcode's destination settings** in interactive runs (the Filter field and "Manage Run Destinations..." in the destination menu) when a simulator seems to be missing from Xcode. The README gained a troubleshooting section for this.
 
