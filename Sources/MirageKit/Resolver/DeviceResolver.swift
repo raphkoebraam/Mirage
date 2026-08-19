@@ -1,7 +1,7 @@
 import Foundation
 
-/// Resolves human-friendly queries — names, UDIDs, UDID prefixes, substrings,
-/// the magic string "booted" — against a `SimulatorInventory`.
+/// Resolves user queries (names, UDIDs, UDID prefixes, substrings, "booted")
+/// against a `SimulatorInventory`.
 ///
 /// Resolution order for devices:
 /// 1. `booted` → the single booted device
@@ -116,7 +116,7 @@ public struct DeviceResolver: Sendable {
     // MARK: - Runtimes
 
     /// Resolves a runtime query (identifier, display name, or bare version).
-    /// A nil query picks the newest available runtime for `deviceType` —
+    /// A nil query picks the newest available runtime for `deviceType`,
     /// first via the runtime's supported-device-type list, then by platform.
     public func resolveRuntime(_ query: String?, for deviceType: DeviceType?) throws -> SimRuntime {
         let available = inventory.runtimes
@@ -169,16 +169,14 @@ public struct DeviceResolver: Sendable {
         throw ResolutionError.runtimeNotFound(query: nil)
     }
 
-    /// Close-but-not-exact runtime candidates for a query that
-    /// `resolveRuntime` rejected: version-family matches ("18" → every
-    /// available 18.x) and name fragments ("watch" → watchOS …), ranked by
-    /// numeric closeness to the query ("18" means 18.0, so 18.0 beats 18.5).
-    ///
-    /// When a device type is given, incompatible runtimes are filtered out;
-    /// if the requested family exists but none of it can run the device,
-    /// the suggestions become the runtimes that can, closest to the query.
+    /// Near-miss candidates for a query `resolveRuntime` rejected:
+    /// version-family matches ("18" → every available 18.x) and name
+    /// fragments ("watch" → watchOS …), ranked by numeric closeness
+    /// ("18" means 18.0, so 18.0 beats 18.5). With a device type,
+    /// incompatible runtimes are dropped; if the family exists but none of
+    /// it can run the device, the runtimes that can are suggested instead.
     public func suggestRuntimes(_ query: String, for deviceType: DeviceType?) -> [SimRuntime] {
-        // A numeric query is a version search only — "1" must not match
+        // A numeric query only searches versions; "1" must not match
         // "iOS 18.4" by substring.
         let isVersionQuery = query.split(separator: ".").allSatisfy { Int($0) != nil }
         let available = inventory.runtimes.filter(\.isAvailable)
@@ -207,8 +205,8 @@ public struct DeviceResolver: Sendable {
             return rank(compatible, closestTo: isVersionQuery ? query : nil, preferring: platform)
         }
         if !matches.isEmpty {
-            // The family the user asked for can't run this device — redirect
-            // to what can.
+            // The requested family cannot run this device; redirect to
+            // what can.
             return rank(
                 inventory.runtimes(supporting: deviceType),
                 closestTo: isVersionQuery ? query : nil,
@@ -246,7 +244,7 @@ public struct DeviceResolver: Sendable {
         }
     }
 
-    /// "18" matches 18.x; "18.4" matches 18.4.y; "1" matches nothing —
+    /// "18" matches 18.x, "18.4" matches 18.4.y, "1" matches nothing:
     /// whole leading segments only.
     /// Version equality modulo trailing zero segments: "18", "18.0", and
     /// "18.0.0" all name the same release. Non-numeric inputs never match.

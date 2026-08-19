@@ -2,7 +2,7 @@ import MirageKit
 import MirageKitTesting
 import Testing
 
-@Suite("DeviceResolver — devices")
+@Suite("DeviceResolver: devices")
 struct DeviceResolverDeviceTests {
     let resolver: DeviceResolver
 
@@ -67,7 +67,7 @@ struct DeviceResolverDeviceTests {
     @Test("a name match prefers a booted device over newer runtimes")
     func prefersBooted() throws {
         // "iPhone 17 Pro" exists booted on iOS 26; substring "iphone 17"
-        // also matches nothing else available — booted one wins.
+        // also matches nothing else available; the booted one wins.
         let device = try resolver.resolveDevice("iphone 17 pro")
         #expect(device.isBooted)
     }
@@ -102,7 +102,7 @@ struct DeviceResolverDeviceTests {
     }
 }
 
-@Suite("DeviceResolver — device types")
+@Suite("DeviceResolver: device types")
 struct DeviceResolverTypeTests {
     let resolver: DeviceResolver
 
@@ -148,7 +148,7 @@ struct DeviceResolverTypeTests {
     }
 }
 
-@Suite("DeviceResolver — runtimes")
+@Suite("DeviceResolver: runtimes")
 struct DeviceResolverRuntimeTests {
     let resolver: DeviceResolver
     let iphone17Pro: DeviceType

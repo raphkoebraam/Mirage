@@ -16,7 +16,7 @@ struct RuntimeSuggestionTests {
     func majorVersion() {
         let suggestions = resolver.suggestRuntimes("18", for: nil)
 
-        // "18" means 18.0 — the nearest version wins, not the newest.
+        // "18" means 18.0; the nearest version wins, not the newest.
         #expect(suggestions.map(\.name) == ["iOS 18.0", "iOS 18.4"])
     }
 
@@ -40,8 +40,8 @@ struct RuntimeSuggestionTests {
     func incompatibleFamilyRedirects() {
         let ipad = inventory.deviceTypes[2]
 
-        // 18.x exists but none of it supports the iPad in this fixture —
-        // the suggestion should be what actually works.
+        // 18.x exists but none of it supports the iPad in this fixture;
+        // the suggestion should be what works.
         let suggestions = resolver.suggestRuntimes("18", for: ipad)
 
         #expect(suggestions.map(\.name) == ["iOS 26.0"])
@@ -52,7 +52,7 @@ struct RuntimeSuggestionTests {
         #expect(resolver.suggestRuntimes("17", for: nil).isEmpty)
     }
 
-    @Test("a partial major is not a match — '1' does not mean 17 or 18")
+    @Test("a partial major is not a match: '1' does not mean 17 or 18")
     func noSloppyPrefixes() {
         #expect(resolver.suggestRuntimes("1", for: nil).isEmpty)
     }
@@ -81,7 +81,7 @@ struct RuntimeSuggestionTests {
     }
 }
 
-@Suite("Runtime–device compatibility")
+@Suite("Runtime-device compatibility")
 struct CompatibilityTests {
     let inventory: SimulatorInventory
     var iphone17Pro: DeviceType {
@@ -125,7 +125,7 @@ struct CompatibilityTests {
         // watchOS 26.0 lists no device types; the watch's minimum runtime is
         // 26.0.0, which "26.0" satisfies (segment-aware compare, not string).
         #expect(inventory.isCompatible(watchType, with: watchos26))
-        // The iPhone 17 Pro's minimum is 26.0.0 — a fabricated empty-list
+        // The iPhone 17 Pro's minimum is 26.0.0; a fabricated empty-list
         // 18.4 runtime must be rejected by the range check.
         let bareRuntime = SimRuntime(
             identifier: "x",

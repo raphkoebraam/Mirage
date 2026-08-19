@@ -1,6 +1,6 @@
 /// Curated `simctl list -j` payload matching the Xcode 26.6 schema,
 /// including edge cases: an unavailable runtime, an unavailable device,
-/// a booted device, an unknown device state, and a watch–phone pair.
+/// a booted device, an unknown device state, and a watch-phone pair.
 public enum SimulatorFixtures {
     public static let listJSON = """
     {
@@ -267,8 +267,8 @@ public enum SimulatorFixtures {
 import Foundation
 
 public extension SimulatorFixtures {
-    /// The same inventory with every device shut down — for exercising
-    /// paths that depend on nothing being booted.
+    /// The same inventory with every device shut down, for paths that
+    /// need nothing booted.
     static var allShutdownJSON: String {
         listJSON.replacingOccurrences(of: "\"Booted\"", with: "\"Shutdown\"")
     }

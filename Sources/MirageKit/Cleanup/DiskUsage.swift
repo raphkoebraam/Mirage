@@ -1,5 +1,4 @@
-/// Read-only disk accounting over the inventory — the companion to
-/// `CleanupPlanner` that deletes nothing.
+/// Read-only disk accounting over the inventory. Deletes nothing.
 public struct DiskUsage: Equatable, Sendable {
     public struct RuntimeUsage: Equatable, Sendable, Codable {
         public let runtimeIdentifier: String

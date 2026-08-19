@@ -41,7 +41,7 @@ struct ProcessCommandRunnerTests {
 
     @Test("does not deadlock on output larger than the pipe buffer")
     func handlesLargeOutput() throws {
-        // 256 KiB on both streams — well past the 64 KiB pipe buffer.
+        // 256 KiB on both streams, well past the 64 KiB pipe buffer.
         let output = try runner.run(
             Command(
                 executable: "/bin/sh",

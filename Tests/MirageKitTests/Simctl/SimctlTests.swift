@@ -3,7 +3,7 @@ import MirageKit
 import MirageKitTesting
 import Testing
 
-/// Every test asserts the exact `xcrun simctl` argv the client produces —
+/// Every test asserts the exact `xcrun simctl` argv the client produces:
 /// the contract between mirage and Apple's tooling.
 @Suite("Simctl invocations")
 struct SimctlTests {

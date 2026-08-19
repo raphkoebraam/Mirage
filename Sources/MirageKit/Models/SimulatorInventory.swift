@@ -37,8 +37,8 @@ public struct SimulatorInventory: Equatable, Sendable {
     }
 
     /// All available runtimes matching a query: an exact identifier, a
-    /// display name (case-insensitive), or a bare version — the latter can
-    /// match several platforms (e.g. "26.0" → iOS 26.0 and watchOS 26.0).
+    /// display name (case-insensitive), or a bare version, which can match
+    /// several platforms (e.g. "26.0" → iOS 26.0 and watchOS 26.0).
     public func runtimes(matching query: String) -> [SimRuntime] {
         runtimes.filter { runtime in
             runtime.isAvailable && (

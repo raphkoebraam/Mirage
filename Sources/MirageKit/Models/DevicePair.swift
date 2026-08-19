@@ -1,4 +1,4 @@
-/// A watch–phone simulator pair.
+/// A watch-phone simulator pair.
 public struct DevicePair: Equatable, Sendable {
     /// One side of a pair, as reported inside `pairs` (a reduced device record).
     public struct Member: Equatable, Sendable, Codable {

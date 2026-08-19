@@ -2,14 +2,14 @@ import Foundation
 
 /// Computes which simulators are safe to remove, in tiers:
 ///
-/// 1. **unavailable** — their runtime is gone; they can never boot again.
-/// 2. **duplicate** — same (name, device type, runtime); one copy is kept
+/// 1. **unavailable**: their runtime is gone; they can never boot again.
+/// 2. **duplicate**: same (name, device type, runtime); one copy is kept
 ///    (a booted one if any, else the one with the most data).
-/// 3. **staleRuntime** (opt-in) — shutdown devices whose runtime is older
+/// 3. **staleRuntime** (opt-in): shutdown devices whose runtime is older
 ///    than the newest available runtime for the same platform.
 ///
 /// Booted devices, devices mid-operation (creating/booting), and members of
-/// watch–phone pairs are never selected: deleting half a pair breaks it
+/// watch-phone pairs are never selected: deleting half a pair breaks it
 /// silently, and busy devices are not safe to remove.
 public struct CleanupPlanner: Sendable {
     private let inventory: SimulatorInventory
@@ -21,7 +21,7 @@ public struct CleanupPlanner: Sendable {
     /// - Parameters:
     ///   - includeStaleRuntimes: adds shutdown devices on non-latest runtimes.
     ///   - runtimeIdentifiers: runtimes whose shutdown devices should all be
-    ///     removed (an explicit user request — the duplicate keep rule does
+    ///     removed (an explicit user request; the duplicate keep rule does
     ///     not apply, but booted/pair protections still do).
     public func plan(
         includeStaleRuntimes: Bool = false,
@@ -77,12 +77,10 @@ public struct CleanupPlanner: Sendable {
         let keptUDID: String
     }
 
-    /// Groups by (name, device type, runtime). The kept copy is a booted
-    /// duplicate when one exists (even though booted devices are outside
-    /// `candidates`, they still count as the keeper), otherwise the most
-    /// recently used one (what Xcode's destination menu prefers and what the
-    /// user has been working with), then the one with the most data; ties
-    /// keep the lowest UDID for determinism.
+    /// Groups by (name, device type, runtime). Keep order: a booted copy
+    /// (booted devices are outside `candidates` but still count as the
+    /// keeper), then the most recently used, then the most data, then the
+    /// lowest UDID for determinism.
     private func duplicateLosers(among candidates: [Device]) -> [DuplicateLoser] {
         struct GroupKey: Hashable {
             let name: String
@@ -155,9 +153,9 @@ public struct CleanupPlan: Equatable, Sendable {
             case .unavailable:
                 "unavailable"
             case let .duplicate(keptUDID):
-                "duplicate — keeping \(keptUDID.prefix(8))"
+                "duplicate, keeping \(keptUDID.prefix(8))"
             case let .staleRuntime(newestRuntime):
-                "stale runtime — newest is \(newestRuntime)"
+                "stale runtime, newest is \(newestRuntime)"
             case let .requestedRuntime(runtime):
                 "on \(runtime) (requested)"
             }

@@ -1,5 +1,5 @@
-/// Thin client for the few `xcodebuild` operations mirage needs —
-/// currently just runtime platform downloads.
+/// Client for the `xcodebuild` operations mirage needs, currently just
+/// runtime platform downloads.
 public struct Xcodebuild: Sendable {
     private let runner: any CommandRunning
 

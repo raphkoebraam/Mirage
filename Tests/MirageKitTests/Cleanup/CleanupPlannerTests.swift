@@ -107,7 +107,7 @@ struct CleanupPlannerTests {
     @Test("pair members are protected from duplicate and stale selection")
     func protectsPairMembers() throws {
         // The watch (pair member) sits on watchOS 26 alongside a fake older
-        // watch runtime — it would be stale-eligible if not paired.
+        // watch runtime; it would be stale-eligible if not paired.
         let inventory = try SimulatorInventory(json: SimulatorFixtures.listJSON)
         let oldWatchRuntime = SimRuntime(
             identifier: "com.apple.CoreSimulator.SimRuntime.watchOS-11-0",
@@ -209,7 +209,7 @@ struct CleanupPlannerTests {
         let plan = planner.plan(runtimeIdentifiers: ["com.apple.CoreSimulator.SimRuntime.iOS-26-0"])
 
         // CACA... is the duplicate keeper, but the user asked for the whole
-        // runtime to go — only booted devices and pair members survive.
+        // runtime to go; only booted devices and pair members survive.
         #expect(plan.deletedUDIDs.contains("CACACACA-1111-2222-3333-444444444444"))
         #expect(plan.deletedUDIDs.contains("11111111-2222-3333-4444-555555555555"))
         #expect(plan.deletedUDIDs.contains("12121212-3434-5656-7878-909090909090"))
