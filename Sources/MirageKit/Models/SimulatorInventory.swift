@@ -69,7 +69,8 @@ extension SimulatorInventory {
                         dataPath: record.dataPath,
                         dataPathSize: record.dataPathSize,
                         logPath: record.logPath,
-                        availabilityError: record.availabilityError
+                        availabilityError: record.availabilityError,
+                        lastUsedAt: record.lastUsedAt.flatMap { try? Date($0, strategy: .iso8601) }
                     )
                 }
             }
@@ -106,6 +107,7 @@ extension SimulatorInventory {
         let dataPathSize: Int64?
         let logPath: String?
         let availabilityError: String?
+        let lastUsedAt: String?
     }
 
     private struct PairRecord: Decodable {
