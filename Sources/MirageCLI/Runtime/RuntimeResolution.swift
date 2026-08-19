@@ -35,8 +35,8 @@ func resolveRuntimeForgivingly(
 
         guard ui.isInteractive else {
             throw MirageCLIError(
-                "\(reason) Closest that works: \(closest.name) — "
-                    + "re-run with --runtime \"\(closest.version)\"."
+                "\(reason) Closest that works: \(closest.name). "
+                    + "Re-run with --runtime \"\(closest.version)\"."
             )
         }
 
@@ -47,7 +47,7 @@ func resolveRuntimeForgivingly(
     }
 }
 
-/// Fails with actionable guidance when a device type can't run on a runtime —
+/// Fails with guidance when a device type cannot run on a runtime,
 /// instead of simctl's bare "Incompatible device" (error 403).
 func requireCompatible(
     _ deviceType: DeviceType,
@@ -68,8 +68,8 @@ func requireCompatible(
     throw MirageCLIError(lines.joined(separator: "\n"))
 }
 
-/// Order-preserving dedupe — some machines carry two runtime records for the
-/// same version (different builds), which would read as a stutter.
+/// Order-preserving dedupe; some machines carry two runtime records for
+/// the same version (different builds), which would read as a stutter.
 func uniqued(_ items: [String]) -> [String] {
     var seen = Set<String>()
     return items.filter { seen.insert($0).inserted }

@@ -50,7 +50,7 @@ struct DoctorCommand: AsyncParsableCommand {
             let unavailable = inventory.devices.count(where: { !$0.isAvailable })
             if unavailable > 0 {
                 ui.warning(
-                    "\(unavailable) unavailable device(s) — run `mirage cleanup` to remove them."
+                    "\(unavailable) unavailable device(s). Run `mirage cleanup` to remove them."
                 )
             }
 

@@ -8,7 +8,7 @@ struct CleanupCommand: AsyncParsableCommand {
         abstract: "Slim down the simulator roster.",
         discussion: """
         Removes unavailable devices (their runtime is gone) and duplicates \
-        (same name, type, and runtime — a booted copy is kept, else the most \
+        (same name, type, and runtime; a booted copy is kept, else the most \
         recently used one, else the one with the most data). Booted devices \
         and watch-pair members are never touched. The plan is shown before \
         anything is deleted.
@@ -105,8 +105,8 @@ struct CleanupCommand: AsyncParsableCommand {
         return "Proceed to \(actions.joined(separator: " and "))?"
     }
 
-    /// An explicitly requested runtime whose devices all survive the
-    /// protections deserves an explanation, not silence.
+    /// When every device on an explicitly requested runtime survives the
+    /// protections, say why instead of staying silent.
     private func warnAboutProtectedDevices(
         requested: Set<String>,
         plan: CleanupPlan,

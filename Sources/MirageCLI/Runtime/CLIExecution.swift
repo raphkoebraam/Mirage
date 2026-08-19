@@ -29,8 +29,8 @@ struct MirageCLIError: Error, CustomStringConvertible, Equatable {
 }
 
 extension Simctl {
-    /// Fetches the inventory and resolves a device query in one step —
-    /// the common preamble of almost every command.
+    /// Fetches the inventory and resolves a device query in one step, the
+    /// common preamble of most commands.
     func resolvedDevice(_ query: String) throws -> Device {
         try DeviceResolver(inventory: list()).resolveDevice(query)
     }
@@ -50,7 +50,7 @@ extension DeviceResolver {
                 return try resolveDevice("booted")
             } catch ResolutionError.noBootedDevice {
                 throw MirageCLIError(
-                    "No device given and nothing is booted — pass a device or boot one first."
+                    "No device given and nothing is booted. Pass a device or boot one first."
                 )
             }
         }

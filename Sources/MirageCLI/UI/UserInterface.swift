@@ -7,7 +7,7 @@ public protocol UserInterface: Sendable {
     func warning(_ message: String)
     func error(_ message: String)
 
-    /// Raw data output (paths, JSON, passthrough text) — always plain stdout.
+    /// Raw data output (paths, JSON, passthrough text); always plain stdout.
     func output(_ text: String)
 
     func table(headers: [String], rows: [[String]])
@@ -26,6 +26,6 @@ public protocol UserInterface: Sendable {
     /// cannot prompt (non-TTY), letting callers fail with guidance instead.
     func choose(_ question: String, options: [String]) -> String?
 
-    /// Whether prompts can actually be presented.
+    /// Whether prompts can be presented.
     var isInteractive: Bool { get }
 }

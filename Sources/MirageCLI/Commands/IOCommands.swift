@@ -74,7 +74,7 @@ struct RecordCommand: AsyncParsableCommand {
             let resolved = try simctl.resolvedTarget(device)
             let path = output ?? defaultMediaPath(deviceName: resolved.name, fileExtension: "mov")
 
-            ui.info("Recording \(resolved.name) — press Ctrl-C to stop.")
+            ui.info("Recording \(resolved.name). Press Ctrl-C to stop.")
             let code = try simctl.recordVideo(
                 udid: resolved.udid,
                 outputPath: path,

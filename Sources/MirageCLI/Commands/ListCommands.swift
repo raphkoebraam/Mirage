@@ -134,7 +134,7 @@ struct ListDeviceTypesCommand: AsyncParsableCommand {
 struct ListPairsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pairs",
-        abstract: "List watch–phone pairs."
+        abstract: "List watch-phone pairs."
     )
 
     func run() async throws {

@@ -364,7 +364,7 @@ struct PairCommand: AsyncParsableCommand {
 struct UnpairCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "unpair",
-        abstract: "Unpair a watch–phone pair."
+        abstract: "Unpair a watch-phone pair."
     )
 
     @Argument(help: "Pair UUID (see `mirage list pairs`).")

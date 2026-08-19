@@ -1,7 +1,6 @@
 import ArgumentParser
 import MirageKit
 
-/// Root command of the `mirage` CLI.
 public struct Mirage: AsyncParsableCommand {
     public static let configuration = CommandConfiguration(
         commandName: "mirage",

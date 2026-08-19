@@ -17,7 +17,7 @@ struct DoctorCommandTests {
         #expect(harness.runner.executed.first?.executable == "/usr/bin/xcode-select")
         #expect(harness.ui.successMessages.contains { $0.contains("Xcode") })
         #expect(harness.ui.successMessages.contains { $0.contains("simctl") })
-        // The fixture contains one unavailable device — doctor should point
+        // The fixture contains one unavailable device; doctor should point
         // at cleanup.
         #expect(harness.ui.events.contains { event in
             if case let .warning(message) = event { return message.contains("cleanup") }
