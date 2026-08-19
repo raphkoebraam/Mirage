@@ -13,7 +13,7 @@ Mirage is a friendly, scriptable command-line tool for Apple simulators. It sits
 
 ```console
 $ mirage boot "iphone 17 pro"        # names, not UDIDs
-$ mirage create "CI Phone" --type "iphone 17 pro"   # newest runtime picked for you
+$ mirage create --type "iphone 17 pro"   # newest runtime picked, named "iPhone 17 Pro"
 $ mirage screenshot                  # the booted device, timestamped filename for free
 $ mirage list --json | jq '.[].udid' # scripting-friendly everywhere
 ```
@@ -22,7 +22,7 @@ $ mirage list --json | jq '.[].udid' # scripting-friendly everywhere
 
 `simctl` can do almost anything, but it makes you work for it. It wants exact UDIDs. Its ~40 subcommands follow three different naming conventions (`get_app_container`, `pbcopy`, `status_bar`). Creating a device means typing out identifiers like `com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro`. And when something goes wrong, the errors rarely tell you what to do instead.
 
-Mirage takes a different approach. Anywhere a command wants a `<device>`, you can pass a name, a unique part of a name, a UDID, the first few characters of a UDID, or simply `booted`. Where the device is the command's only argument, you can leave it out entirely and Mirage targets the booted simulator. If your query matches several devices, Mirage prefers the booted one, then the one on the newest runtime. If it genuinely can't decide, it shows you the candidates instead of guessing. The same forgiveness applies to runtimes: `--runtime 18` means iOS 18.0 when that release is installed, and when a version is not installed Mirage offers the closest match that your device can actually run, so you never hit simctl's bare "Incompatible device" error.
+Mirage takes a different approach. Anywhere a command wants a `<device>`, you can pass a name, a unique part of a name, a UDID, the first few characters of a UDID, or simply `booted`. The device is always the only positional argument (everything else is a named option such as `--bundle-id` or `--name`), and you can leave it out entirely to target the booted simulator. If your query matches several devices, Mirage prefers the booted one, then the one on the newest runtime. If it genuinely can't decide, it shows you the candidates instead of guessing. The same forgiveness applies to runtimes: `--runtime 18` means iOS 18.0 when that release is installed, and when a version is not installed Mirage offers the closest match that your device can actually run, so you never hit simctl's bare "Incompatible device" error.
 
 There's also a small layer of quality-of-life on top: a `cleanup` command that shows you exactly what it wants to delete (and how much disk you'll get back) before touching anything, a `disk-usage` report, a `doctor` for sanity checks, and pretty tables everywhere, with `--json` next to them whenever you'd rather pipe to `jq`.
 
@@ -94,11 +94,11 @@ The **[command reference](docs/commands.md)** documents every command with its e
 
 ```console
 $ mirage cleanup --dry-run           # see what's safe to delete, and how much space it frees
-$ mirage app launch booted com.example.app --console
+$ mirage app launch --bundle-id com.example.app --console
 $ mirage statusbar demo              # 9:41, full battery, full bars
-$ mirage push booted com.example.app --message "Hello!"
+$ mirage push --bundle-id com.example.app --message "Hello!"
 $ mirage runtime available            # what Apple offers, and what is already installed
-$ mirage runtime install iOS 26.2
+$ mirage runtime install iOS --version 26.2
 ```
 
 And every command answers `--help`.
