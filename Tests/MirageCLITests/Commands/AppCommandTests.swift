@@ -10,7 +10,7 @@ struct AppCommandTests {
     func install() async throws {
         harness.stubInventory()
 
-        try await harness.run(["app", "install", "booted", "/tmp/My.app"])
+        try await harness.run(["app", "install", "booted", "--path", "/tmp/My.app"])
 
         #expect(harness.lastArguments == ["install", "9EC7498F-C644-4431-8CA5-CD1432170998", "/tmp/My.app"])
     }
@@ -19,7 +19,7 @@ struct AppCommandTests {
     func uninstall() async throws {
         harness.stubInventory()
 
-        try await harness.run(["app", "uninstall", "booted", "com.example.app"])
+        try await harness.run(["app", "uninstall", "booted", "--bundle-id", "com.example.app"])
 
         #expect(harness.lastArguments == ["uninstall", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
     }
@@ -29,7 +29,16 @@ struct AppCommandTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "com.example.app: 777\n")
 
-        try await harness.run(["app", "launch", "booted", "com.example.app", "--", "-AppleLocale", "en_US"])
+        try await harness.run([
+            "app",
+            "launch",
+            "booted",
+            "--bundle-id",
+            "com.example.app",
+            "--",
+            "-AppleLocale",
+            "en_US",
+        ])
 
         #expect(harness.lastArguments == [
             "launch", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app", "-AppleLocale", "en_US",
@@ -41,7 +50,7 @@ struct AppCommandTests {
     func launchConsole() async throws {
         harness.stubInventory()
 
-        try await harness.run(["app", "launch", "booted", "com.example.app", "--console"])
+        try await harness.run(["app", "launch", "--bundle-id", "com.example.app", "--console"])
 
         #expect(harness.lastArguments == [
             "launch", "--console-pty", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app",
@@ -52,7 +61,7 @@ struct AppCommandTests {
     func terminate() async throws {
         harness.stubInventory()
 
-        try await harness.run(["app", "terminate", "booted", "com.example.app"])
+        try await harness.run(["app", "terminate", "--bundle-id", "com.example.app"])
 
         #expect(harness.lastArguments == ["terminate", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
     }
@@ -118,7 +127,7 @@ struct AppCommandTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "info-output")
 
-        try await harness.run(["app", "info", "booted", "com.example.app"])
+        try await harness.run(["app", "info", "booted", "--bundle-id", "com.example.app"])
 
         #expect(harness.lastArguments == ["appinfo", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app"])
         #expect(harness.ui.outputText.contains("info-output"))
@@ -129,7 +138,7 @@ struct AppCommandTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "/containers/data\n")
 
-        try await harness.run(["app", "container", "booted", "com.example.app", "data"])
+        try await harness.run(["app", "container", "booted", "--bundle-id", "com.example.app", "--container", "data"])
 
         #expect(harness.lastArguments == [
             "get_app_container", "9EC7498F-C644-4431-8CA5-CD1432170998", "com.example.app", "data",
@@ -141,7 +150,7 @@ struct AppCommandTests {
     func installData() async throws {
         harness.stubInventory()
 
-        try await harness.run(["app", "install-data", "booted", "/tmp/data.xcappdata"])
+        try await harness.run(["app", "install-data", "booted", "--path", "/tmp/data.xcappdata"])
 
         #expect(harness.lastArguments == [
             "install_app_data", "9EC7498F-C644-4431-8CA5-CD1432170998", "/tmp/data.xcappdata",
