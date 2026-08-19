@@ -96,7 +96,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "My Phone", "--type", "iphone 17 pro"])
+        try await harness.run(["create", "--name", "My Phone", "--type", "iphone 17 pro"])
 
         #expect(harness.lastArguments == [
             "create", "My Phone",
@@ -111,7 +111,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "My Phone", "--type", "iphone 17 pro"])
+        try await harness.run(["create", "--name", "My Phone", "--type", "iphone 17 pro"])
 
         #expect(harness.ui.events.contains { event in
             if case let .info(message) = event { return message.contains("Manage Run Destinations") }
@@ -121,8 +121,29 @@ struct CreateCloneDeleteRenameTests {
         let quiet = CLIHarness(isInteractive: false)
         quiet.stubInventory()
         quiet.runner.stub(stdout: "NEW-UDID\n")
-        try await quiet.run(["create", "My Phone", "--type", "iphone 17 pro"])
+        try await quiet.run(["create", "--name", "My Phone", "--type", "iphone 17 pro"])
         #expect(!quiet.ui.events.contains { if case .info = $0 { true } else { false } })
+    }
+
+    @Test("create without --name uses the device type's name")
+    func createDefaultName() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "--type", "iphone 17 pro"])
+
+        #expect(harness.lastArguments == [
+            "create", "iPhone 17 Pro",
+            "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+            "com.apple.CoreSimulator.SimRuntime.iOS-26-0",
+        ])
+    }
+
+    @Test("create rejects a positional name")
+    func createRejectsPositionalName() {
+        #expect(throws: (any Error).self) {
+            try Mirage.parseAsRoot(["create", "My Phone", "--type", "iphone 17 pro"])
+        }
     }
 
     @Test("create accepts an explicit runtime version")
@@ -130,7 +151,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Old Phone", "--type", "iphone 17 pro", "--runtime", "18.4"])
+        try await harness.run(["create", "--name", "Old Phone", "--type", "iphone 17 pro", "--runtime", "18.4"])
 
         #expect(harness.lastArguments == [
             "create", "Old Phone",
@@ -144,7 +165,7 @@ struct CreateCloneDeleteRenameTests {
         let harness = CLIHarness(isInteractive: false)
         harness.stubInventory()
 
-        let exit = try await harness.runExpectingExit(["create", "My Phone"])
+        let exit = try await harness.runExpectingExit(["create", "--name", "My Phone"])
 
         #expect(exit == ExitCode(1))
         #expect(harness.ui.errorMessages.first?.contains("--type") == true)
@@ -156,7 +177,7 @@ struct CreateCloneDeleteRenameTests {
         harness.ui.answerChoose("iPhone 17 Pro")
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "My Phone"])
+        try await harness.run(["create", "--name", "My Phone"])
 
         #expect(harness.lastArguments?.first == "create")
         #expect(harness.lastArguments?[2] == "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro")
@@ -167,7 +188,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
+        try await harness.run(["create", "--name", "Test", "--type", "iphone 17 pro", "--runtime", "18"])
 
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
         #expect(harness.lastArguments == [
@@ -183,7 +204,7 @@ struct CreateCloneDeleteRenameTests {
         harness.ui.answerConfirm(true)
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3"])
+        try await harness.run(["create", "--name", "Test", "--type", "iphone 17 pro", "--runtime", "18.3"])
 
         #expect(harness.ui.events.contains { event in
             if case let .confirm(question) = event { return question.contains("iOS 18.4") }
@@ -202,7 +223,7 @@ struct CreateCloneDeleteRenameTests {
         harness.ui.answerConfirm(false)
 
         let exit = try await harness.runExpectingExit([
-            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
+            "create", "--name", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
         ])
 
         #expect(exit == ExitCode(1))
@@ -215,7 +236,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
 
         let exit = try await harness.runExpectingExit([
-            "create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
+            "create", "--name", "Test", "--type", "iphone 17 pro", "--runtime", "18.3",
         ])
 
         #expect(exit == ExitCode(1))
@@ -229,7 +250,7 @@ struct CreateCloneDeleteRenameTests {
         harness.runner.stub(stdout: "NEW-UDID\n")
 
         // 18.x exists but cannot run the iPad in this fixture.
-        try await harness.run(["create", "Test", "--type", "ipad", "--runtime", "18.3"])
+        try await harness.run(["create", "--name", "Test", "--type", "ipad", "--runtime", "18.3"])
 
         #expect(harness.ui.events.contains { event in
             if case let .confirm(question) = event {
@@ -246,7 +267,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "Test", "--type", "iphone 17 pro", "--runtime", "18.3", "--yes"])
+        try await harness.run(["create", "--name", "Test", "--type", "iphone 17 pro", "--runtime", "18.3", "--yes"])
 
         #expect(!harness.ui.events.contains { if case .confirm = $0 { true } else { false } })
         #expect(harness.ui.events.contains { event in
@@ -265,7 +286,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
 
         let exit = try await harness.runExpectingExit([
-            "create", "Test", "--type", "ipad", "--runtime", "18.4",
+            "create", "--name", "Test", "--type", "ipad", "--runtime", "18.4",
         ])
 
         #expect(exit == ExitCode(1))
@@ -281,7 +302,7 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "NEW-UDID\n")
 
-        try await harness.run(["create", "My Phone", "--type", "iphone 17 pro", "--boot"])
+        try await harness.run(["create", "--name", "My Phone", "--type", "iphone 17 pro", "--boot"])
 
         #expect(harness.commandsAfterList.map { Array($0.arguments.dropFirst()) } == [
             [
@@ -299,9 +320,19 @@ struct CreateCloneDeleteRenameTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "CLONE-UDID\n")
 
-        try await harness.run(["clone", "Fresh Device", "Fresh Copy"])
+        try await harness.run(["clone", "Fresh Device", "--name", "Fresh Copy"])
 
         #expect(harness.lastArguments == ["clone", "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "Fresh Copy"])
+    }
+
+    @Test("clone without a device targets the booted simulator")
+    func cloneBooted() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "CLONE-UDID\n")
+
+        try await harness.run(["clone", "--name", "Booted Copy"])
+
+        #expect(harness.lastArguments == ["clone", "9EC7498F-C644-4431-8CA5-CD1432170998", "Booted Copy"])
     }
 
     @Test("delete resolves multiple devices and confirms once")
@@ -339,7 +370,7 @@ struct CreateCloneDeleteRenameTests {
     func rename() async throws {
         harness.stubInventory()
 
-        try await harness.run(["rename", "Fresh Device", "Better Name"])
+        try await harness.run(["rename", "Fresh Device", "--name", "Better Name"])
 
         #expect(harness.lastArguments == ["rename", "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "Better Name"])
     }
@@ -348,7 +379,7 @@ struct CreateCloneDeleteRenameTests {
     func upgrade() async throws {
         harness.stubInventory()
 
-        try await harness.run(["upgrade", "Fresh Device", "26.0"])
+        try await harness.run(["upgrade", "Fresh Device", "--runtime", "26.0"])
 
         #expect(harness.lastArguments == [
             "upgrade", "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
