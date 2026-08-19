@@ -8,6 +8,11 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 
 - `mirage doctor` referred to `mirage du`, a command that no longer exists; it now points at `mirage disk-usage`.
 
+### Changed
+
+- **`cleanup` keeps the most recently used duplicate** (after a booted one), falling back to the largest copy only when neither twin has been used. The device Xcode's destination menu prefers now survives a cleanup.
+- **`create` and `cleanup` point at Xcode's destination settings** in interactive runs (the Filter field and "Manage Run Destinations..." in the destination menu) when a simulator seems to be missing from Xcode. The README gained a troubleshooting section for this.
+
 ## [0.9.0] - 2026-08-16
 
 First public release.

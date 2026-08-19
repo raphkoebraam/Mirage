@@ -1,3 +1,5 @@
+import Foundation
+
 /// A simulator device, flattened from `simctl list -j`'s per-runtime grouping.
 public struct Device: Equatable, Sendable, Codable {
     public let udid: String
@@ -10,6 +12,7 @@ public struct Device: Equatable, Sendable, Codable {
     public let dataPathSize: Int64?
     public let logPath: String?
     public let availabilityError: String?
+    public let lastUsedAt: Date?
 
     public init(
         udid: String,
@@ -21,7 +24,8 @@ public struct Device: Equatable, Sendable, Codable {
         dataPath: String? = nil,
         dataPathSize: Int64? = nil,
         logPath: String? = nil,
-        availabilityError: String? = nil
+        availabilityError: String? = nil,
+        lastUsedAt: Date? = nil
     ) {
         self.udid = udid
         self.name = name
@@ -33,6 +37,7 @@ public struct Device: Equatable, Sendable, Codable {
         self.dataPathSize = dataPathSize
         self.logPath = logPath
         self.availabilityError = availabilityError
+        self.lastUsedAt = lastUsedAt
     }
 
     public var isBooted: Bool {

@@ -138,6 +138,7 @@ public enum SimulatorFixtures {
           {
             "dataPath": "/Users/tester/Library/Developer/CoreSimulator/Devices/9EC7498F-C644-4431-8CA5-CD1432170998/data",
             "dataPathSize": 18337792,
+            "lastUsedAt": "2026-08-16T13:31:09Z",
             "logPath": "/Users/tester/Library/Logs/CoreSimulator/9EC7498F-C644-4431-8CA5-CD1432170998",
             "udid": "9EC7498F-C644-4431-8CA5-CD1432170998",
             "isAvailable": true,

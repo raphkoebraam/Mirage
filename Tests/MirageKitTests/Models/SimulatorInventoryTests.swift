@@ -58,6 +58,15 @@ struct SimulatorInventoryTests {
         #expect(booted?.isAvailable == true)
     }
 
+    @Test("decodes lastUsedAt when simctl reports it, nil otherwise")
+    func lastUsedAt() throws {
+        let booted = try #require(inventory.devices.first { $0.udid == "9EC7498F-C644-4431-8CA5-CD1432170998" })
+        #expect(booted.lastUsedAt == ISO8601DateFormatter().date(from: "2026-08-16T13:31:09Z"))
+
+        let fresh = try #require(inventory.devices.first { $0.name == "Fresh Device" })
+        #expect(fresh.lastUsedAt == nil)
+    }
+
     @Test("maps known states and preserves unknown ones")
     func deviceStates() {
         let creating = inventory.devices.first { $0.name == "Fresh Device" }

@@ -79,8 +79,10 @@ public struct CleanupPlanner: Sendable {
 
     /// Groups by (name, device type, runtime). The kept copy is a booted
     /// duplicate when one exists (even though booted devices are outside
-    /// `candidates`, they still count as the keeper), otherwise the candidate
-    /// with the most data; ties keep the lowest UDID for determinism.
+    /// `candidates`, they still count as the keeper), otherwise the most
+    /// recently used one (what Xcode's destination menu prefers and what the
+    /// user has been working with), then the one with the most data; ties
+    /// keep the lowest UDID for determinism.
     private func duplicateLosers(among candidates: [Device]) -> [DuplicateLoser] {
         struct GroupKey: Hashable {
             let name: String
@@ -100,6 +102,9 @@ public struct CleanupPlanner: Sendable {
 
             let kept = group.first(where: \.isBooted)
                 ?? group.max { lhs, rhs in
+                    let lhsUsed = lhs.lastUsedAt ?? .distantPast
+                    let rhsUsed = rhs.lastUsedAt ?? .distantPast
+                    if lhsUsed != rhsUsed { return lhsUsed < rhsUsed }
                     let lhsSize = lhs.dataPathSize ?? 0
                     let rhsSize = rhs.dataPathSize ?? 0
                     return lhsSize != rhsSize ? lhsSize < rhsSize : lhs.udid > rhs.udid

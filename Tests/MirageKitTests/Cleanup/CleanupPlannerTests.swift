@@ -1,3 +1,4 @@
+import Foundation
 import MirageKit
 import MirageKitTesting
 import Testing
@@ -42,6 +43,39 @@ struct CleanupPlannerTests {
                 && entry.reason == .duplicate(keptUDID: "9EC7498F-C644-4431-8CA5-CD1432170998")
         })
         #expect(!plan.deletedUDIDs.contains("9EC7498F-C644-4431-8CA5-CD1432170998"))
+    }
+
+    @Test("duplicates keep the most recently used copy over a larger, idle one")
+    func duplicatesKeepRecentlyUsed() {
+        func twin(_ udid: String, size: Int64, lastUsed: String?) -> Device {
+            Device(
+                udid: udid,
+                name: "Twin",
+                state: .shutdown,
+                isAvailable: true,
+                deviceTypeIdentifier: "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+                runtimeIdentifier: "com.apple.CoreSimulator.SimRuntime.iOS-26-0",
+                dataPathSize: size,
+                lastUsedAt: lastUsed.flatMap { ISO8601DateFormatter().date(from: $0) }
+            )
+        }
+        let inventory = SimulatorInventory(
+            deviceTypes: [],
+            runtimes: [],
+            devices: [
+                twin("BIG-IDLE", size: 900_000_000, lastUsed: "2026-01-01T00:00:00Z"),
+                twin("SMALL-RECENT", size: 1_000_000, lastUsed: "2026-08-16T13:31:09Z"),
+                twin("NEVER-USED", size: 2_000_000_000, lastUsed: nil),
+            ],
+            pairs: []
+        )
+
+        let plan = CleanupPlanner(inventory: inventory).plan()
+
+        // Xcode's destination menu prefers recently used devices, so keeping
+        // that copy is what leaves the user's workflow intact.
+        #expect(plan.deletedUDIDs.sorted() == ["BIG-IDLE", "NEVER-USED"])
+        #expect(plan.entries.allSatisfy { $0.reason == .duplicate(keptUDID: "SMALL-RECENT") })
     }
 
     @Test("stale-runtime devices are only selected when opted in")

@@ -50,3 +50,11 @@ extension Simctl {
         return try resolvedDevice(query)
     }
 }
+
+func hintAboutXcodeDestinations(_ ui: any UserInterface) {
+    guard ui.isInteractive else { return }
+    ui.info(
+        "Not listed in Xcode's destination menu? Clear its Filter field and check "
+            + "\"Manage Run Destinations...\" at the bottom of that menu."
+    )
+}
