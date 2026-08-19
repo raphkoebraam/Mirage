@@ -12,7 +12,7 @@ struct UtilityCommandTests {
         harness.stubInventory()
         harness.runner.stub(stdout: "/data/home\n")
 
-        try await harness.run(["getenv", "booted", "HOME"])
+        try await harness.run(["getenv", "booted", "--variable", "HOME"])
 
         #expect(harness.lastArguments == ["getenv", "9EC7498F-C644-4431-8CA5-CD1432170998", "HOME"])
         #expect(harness.ui.outputText == "/data/home")
@@ -31,16 +31,31 @@ struct UtilityCommandTests {
     func logverbose() async throws {
         harness.stubInventory()
 
-        try await harness.run(["logverbose", "booted", "on"])
+        try await harness.run(["logverbose", "booted", "--on"])
 
         #expect(harness.lastArguments == ["logverbose", "9EC7498F-C644-4431-8CA5-CD1432170998", "enable"])
+
+        let second = CLIHarness()
+        second.stubInventory()
+        try await second.run(["logverbose", "--off"])
+        #expect(second.lastArguments == ["logverbose", "9EC7498F-C644-4431-8CA5-CD1432170998", "disable"])
+    }
+
+    @Test("logverbose requires exactly one of --on and --off")
+    func logverboseRequiresMode() {
+        #expect(throws: (any Error).self) {
+            try Mirage.parseAsRoot(["logverbose", "booted"])
+        }
+        #expect(throws: (any Error).self) {
+            try Mirage.parseAsRoot(["logverbose", "booted", "--on", "--off"])
+        }
     }
 
     @Test("keychain add-root-cert passes the path")
     func keychainAddRootCert() async throws {
         harness.stubInventory()
 
-        try await harness.run(["keychain", "add-root-cert", "booted", "/tmp/ca.pem"])
+        try await harness.run(["keychain", "add-root-cert", "booted", "--path", "/tmp/ca.pem"])
 
         #expect(harness.lastArguments == [
             "keychain", "9EC7498F-C644-4431-8CA5-CD1432170998", "add-root-cert", "/tmp/ca.pem",
@@ -66,7 +81,7 @@ struct LocationCommandTests {
     func set() async throws {
         harness.stubInventory()
 
-        try await harness.run(["location", "set", "booted", "37.3349,-122.009"])
+        try await harness.run(["location", "set", "booted", "--latitude", "37.3349", "--longitude", "-122.009"])
 
         #expect(harness.lastArguments == [
             "location", "9EC7498F-C644-4431-8CA5-CD1432170998", "set", "37.3349,-122.009",
@@ -76,9 +91,28 @@ struct LocationCommandTests {
     @Test("location set rejects malformed coordinates")
     func setInvalid() async throws {
         await #expect(throws: (any Error).self) {
-            try await harness.run(["location", "set", "booted", "not-coords"])
+            try await harness.run(["location", "set", "booted", "--latitude", "north", "--longitude", "1"])
         }
         #expect(harness.runner.executed.isEmpty)
+    }
+
+    @Test("location set requires both coordinates")
+    func setMissingLongitude() async throws {
+        await #expect(throws: (any Error).self) {
+            try await harness.run(["location", "set", "booted", "--latitude", "37.3349"])
+        }
+        #expect(harness.runner.executed.isEmpty)
+    }
+
+    @Test("negative coordinates are values, not option clusters")
+    func setSouthernHemisphere() async throws {
+        harness.stubInventory()
+
+        try await harness.run(["location", "set", "--latitude", "-33.8688", "--longitude", "151.2093"])
+
+        #expect(harness.lastArguments == [
+            "location", "9EC7498F-C644-4431-8CA5-CD1432170998", "set", "-33.8688,151.2093",
+        ])
     }
 
     @Test("location clear stops simulation")
@@ -94,7 +128,7 @@ struct LocationCommandTests {
     func runScenario() async throws {
         harness.stubInventory()
 
-        try await harness.run(["location", "run", "booted", "City Bicycle Ride"])
+        try await harness.run(["location", "run", "booted", "--scenario", "City Bicycle Ride"])
 
         #expect(harness.lastArguments == [
             "location", "9EC7498F-C644-4431-8CA5-CD1432170998", "run", "City Bicycle Ride",
@@ -177,7 +211,7 @@ struct AdvancedCommandTests {
         harness.stubInventory()
         harness.runner.stubInteractive(exitCode: 0)
 
-        try await harness.run(["spawn", "booted", "/bin/ls", "--", "-la"])
+        try await harness.run(["spawn", "booted", "--executable", "/bin/ls", "--", "-la"])
 
         #expect(harness.lastArguments == [
             "spawn", "9EC7498F-C644-4431-8CA5-CD1432170998", "/bin/ls", "-la",
@@ -216,7 +250,7 @@ struct AdvancedCommandTests {
         harness.runner.stubInteractive(exitCode: 0)
 
         // "27" means 27.0; the catalog's 27.0 entry is a release candidate.
-        try await harness.run(["runtime", "install", "iOS", "27"])
+        try await harness.run(["runtime", "install", "iOS", "--version", "27"])
 
         #expect(harness.runner.lastCommand?.arguments == [
             "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "27.0",
@@ -228,7 +262,7 @@ struct AdvancedCommandTests {
     func runtimeInstallUnknownVersion() async throws {
         stubCatalog()
 
-        let exit = try await harness.runExpectingExit(["runtime", "install", "iOS", "17"])
+        let exit = try await harness.runExpectingExit(["runtime", "install", "iOS", "--version", "17"])
 
         #expect(exit == ExitCode(1))
         let message = try #require(harness.ui.errorMessages.first)
@@ -243,7 +277,7 @@ struct AdvancedCommandTests {
     func runtimeInstallAlreadyInstalled() async throws {
         stubCatalog()
 
-        try await harness.run(["runtime", "install", "iOS", "26.5"])
+        try await harness.run(["runtime", "install", "iOS", "--version", "26.5"])
 
         #expect(!harness.runner.executed.contains { $0.arguments.first == "xcodebuild" })
         #expect(harness.ui.events.contains { event in
@@ -257,7 +291,7 @@ struct AdvancedCommandTests {
         harness.runner.stub(stderr: "curl: (6) Could not resolve host", exitCode: 6)
         harness.runner.stubInteractive(exitCode: 0)
 
-        try await harness.run(["runtime", "install", "iOS", "26.2"])
+        try await harness.run(["runtime", "install", "iOS", "--version", "26.2"])
 
         #expect(harness.runner.lastCommand?.arguments == [
             "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "26.2",

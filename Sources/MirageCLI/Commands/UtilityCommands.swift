@@ -7,16 +7,16 @@ struct GetenvCommand: AsyncParsableCommand {
         abstract: "Print an environment variable from a device."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Variable name (e.g. HOME).")
+    @Option(name: .long, help: "Variable name (e.g. HOME).")
     var variable: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try CLIRuntime.ui.output(simctl.getenv(udid: resolved.udid, variable: variable))
         }
     }
@@ -47,20 +47,27 @@ struct LogverboseCommand: AsyncParsableCommand {
         abstract: "Enable or disable verbose logging on a device."
     )
 
-    enum Mode: String, ExpressibleByArgument {
+    enum Mode: String, EnumerableFlag {
         case on, off
+
+        static func help(for value: Mode) -> ArgumentHelp? {
+            switch value {
+            case .on: "Enable verbose logging."
+            case .off: "Disable verbose logging."
+            }
+        }
     }
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "on or off.")
+    @Flag(exclusivity: .exclusive)
     var mode: Mode
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.logverbose(udid: resolved.udid, enabled: mode == .on)
             let state = mode == .on ? "enabled" : "disabled"
             CLIRuntime.ui.success(
@@ -88,16 +95,16 @@ struct KeychainAddRootCertCommand: AsyncParsableCommand {
         abstract: "Add a certificate to the trusted root store."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Path to the certificate.")
+    @Option(name: .long, help: "Path to the certificate.")
     var path: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.keychainAddRootCert(udid: resolved.udid, path: path)
             CLIRuntime.ui.success("Added root certificate to \(resolved.name).")
         }
@@ -110,16 +117,16 @@ struct KeychainAddCertCommand: AsyncParsableCommand {
         abstract: "Add a certificate to the keychain."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Path to the certificate.")
+    @Option(name: .long, help: "Path to the certificate.")
     var path: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.keychainAddCert(udid: resolved.udid, path: path)
             CLIRuntime.ui.success("Added certificate to \(resolved.name).")
         }
@@ -132,8 +139,8 @@ struct KeychainResetCommand: AsyncParsableCommand {
         abstract: "Reset the device's keychain."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
     @Flag(name: .shortAndLong, help: "Skip the confirmation prompt.")
     var yes = false
@@ -142,7 +149,7 @@ struct KeychainResetCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
             let ui = CLIRuntime.ui
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try confirmDestructive("Reset the keychain on \(resolved.name)?", ui: ui, skip: yes)
             try simctl.keychainReset(udid: resolved.udid)
             ui.success("Keychain reset on \(resolved.name).")
@@ -167,33 +174,26 @@ struct LocationSetCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "set",
         abstract: "Set a fixed location.",
-        discussion: "Coordinates are 'latitude,longitude', e.g. 37.3349,-122.009."
+        discussion: "Decimal degrees, e.g. --latitude 37.3349 --longitude -122.009."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Coordinates as lat,lon.")
-    var coordinates: String
+    /// `.unconditional` lets negative coordinates through; otherwise "-122.009"
+    /// would be read as a cluster of short options.
+    @Option(name: .long, parsing: .unconditional, help: "Latitude in decimal degrees.")
+    var latitude: Double
 
-    func validate() throws {
-        let parts = coordinates.split(separator: ",")
-        guard parts.count == 2, Double(parts[0]) != nil, Double(parts[1]) != nil else {
-            throw ValidationError("Coordinates must be 'latitude,longitude', e.g. 37.3349,-122.009.")
-        }
-    }
+    @Option(name: .long, parsing: .unconditional, help: "Longitude in decimal degrees.")
+    var longitude: Double
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
-            let parts = coordinates.split(separator: ",")
-            try simctl.locationSet(
-                udid: resolved.udid,
-                latitude: Double(parts[0])!,
-                longitude: Double(parts[1])!
-            )
-            CLIRuntime.ui.success("Location set to \(coordinates) on \(resolved.name).")
+            let resolved = try simctl.resolvedTarget(device)
+            try simctl.locationSet(udid: resolved.udid, latitude: latitude, longitude: longitude)
+            CLIRuntime.ui.success("Location set to \(latitude),\(longitude) on \(resolved.name).")
         }
     }
 }
@@ -223,16 +223,16 @@ struct LocationRunCommand: AsyncParsableCommand {
         abstract: "Run a location scenario (see `mirage location list`)."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Scenario name.")
+    @Option(name: .long, help: "Scenario name.")
     var scenario: String
 
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             try simctl.locationRun(udid: resolved.udid, scenario: scenario)
             CLIRuntime.ui.success("Running scenario '\(scenario)' on \(resolved.name).")
         }
@@ -399,13 +399,13 @@ struct SpawnCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "spawn",
         abstract: "Spawn an executable on a device.",
-        discussion: "Pass executable arguments after '--'."
+        discussion: "Pass executable arguments after '--', e.g. `mirage spawn --executable /bin/ls -- -la`."
     )
 
-    @Argument(help: "Device (name, UDID, prefix, or 'booted').")
-    var device: String
+    @Argument(help: "Device (name, UDID, or prefix); defaults to the booted simulator.")
+    var device: String?
 
-    @Argument(help: "Path to the executable.")
+    @Option(name: .long, help: "Path to the executable on the device.")
     var executable: String
 
     @Argument(parsing: .postTerminator, help: "Arguments for the executable.")
@@ -414,7 +414,7 @@ struct SpawnCommand: AsyncParsableCommand {
     func run() async throws {
         try await withErrorPresentation {
             let simctl = CLIRuntime.simctl
-            let resolved = try simctl.resolvedDevice(device)
+            let resolved = try simctl.resolvedTarget(device)
             let code = try simctl.spawn(
                 udid: resolved.udid,
                 executablePath: executable,
