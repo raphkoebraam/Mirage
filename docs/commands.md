@@ -130,7 +130,7 @@ Argument | Description
 
 ## list pairs
 
-List watch–phone pairs.
+List watch-phone pairs.
 
 ```
 mirage list pairs
@@ -948,7 +948,7 @@ $ mirage pair "watch" "iphone 17 pro"
 
 ## unpair
 
-Unpair a watch–phone pair.
+Unpair a watch-phone pair.
 
 ```
 mirage unpair <pair>
