@@ -97,6 +97,7 @@ $ mirage cleanup --dry-run           # see what's safe to delete, and how much s
 $ mirage app launch booted com.example.app --console
 $ mirage statusbar demo              # 9:41, full battery, full bars
 $ mirage push booted com.example.app --message "Hello!"
+$ mirage runtime available            # what Apple offers, and what is already installed
 $ mirage runtime install iOS 26.2
 ```
 

@@ -71,6 +71,7 @@ Every Mirage command, generated from the binary's own `--help` output so nothing
 [unpair](#unpair) ·
 [pair-activate](#pair-activate) ·
 [runtime list](#runtime-list) ·
+[runtime available](#runtime-available) ·
 [runtime install](#runtime-install) ·
 [runtime delete](#runtime-delete) ·
 [diagnose](#diagnose) ·
@@ -944,6 +945,24 @@ List runtime disk images.
 
 ```
 mirage runtime list
+```
+
+## runtime available
+
+List simulator runtimes Apple offers for download. Reads the same catalog Xcode's Components pane uses and marks the builds already installed. Install one with `mirage runtime install`.
+
+```
+mirage runtime available [--platform <platform>] [--prerelease] [--json]
+```
+
+Option | Description
+--- | ---
+`--platform <platform>` | Only this platform: iOS, watchOS, tvOS, or visionOS.
+`--prerelease` | Include betas and release candidates.
+`--json` | Emit JSON instead of a table.
+
+```console
+$ mirage runtime available --platform iOS
 ```
 
 ## runtime install

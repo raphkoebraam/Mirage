@@ -4,6 +4,10 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Added
+
+- **`mirage runtime available`** lists the simulator runtimes Apple offers for download (from the catalog Xcode's Components pane reads), marks the builds already installed, and supports `--platform`, `--prerelease`, and `--json`.
+
 ### Fixed
 
 - `mirage doctor` referred to `mirage du`, a command that no longer exists; it now points at `mirage disk-usage`.
