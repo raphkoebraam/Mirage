@@ -4,6 +4,10 @@ All notable changes to Mirage are documented here. The format follows [Keep a Ch
 
 ## [Unreleased]
 
+### Fixed
+
+- `mirage doctor` referred to `mirage du`, a command that no longer exists; it now points at `mirage disk-usage`.
+
 ## [0.9.0] - 2026-08-16
 
 First public release.

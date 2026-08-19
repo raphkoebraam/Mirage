@@ -25,6 +25,21 @@ struct DoctorCommandTests {
         })
     }
 
+    @Test("points at disk-usage, the command that exists, for the on-disk total")
+    func diskUsageHint() async throws {
+        harness.runner.stub(stdout: "/Applications/Xcode.app/Contents/Developer\n")
+        harness.stubInventory()
+
+        try await harness.run(["doctor"])
+
+        let hint = harness.ui.events.compactMap { event -> String? in
+            if case let .info(message) = event, message.contains("on disk") { return message }
+            return nil
+        }.first
+        #expect(hint?.contains("mirage disk-usage") == true)
+        #expect(hint?.contains("mirage du") == false)
+    }
+
     @Test("fails with exit code 1 when Xcode is not selected")
     func noXcode() async throws {
         harness.runner.stub(stderr: "xcode-select: error: unable to get active developer directory\n", exitCode: 2)

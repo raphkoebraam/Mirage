@@ -55,7 +55,7 @@ struct DoctorCommand: AsyncParsableCommand {
             }
 
             let usage = DiskUsage(inventory: inventory)
-            ui.info("Simulator data on disk: \(formatBytes(usage.totalBytes)). See `mirage du`.")
+            ui.info("Simulator data on disk: \(formatBytes(usage.totalBytes)). See `mirage disk-usage`.")
         }
     }
 }
