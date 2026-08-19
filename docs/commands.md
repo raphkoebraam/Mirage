@@ -967,7 +967,7 @@ $ mirage runtime available --platform iOS
 
 ## runtime install
 
-Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5–10 GB) and stream progress.
+Download and install a simulator runtime. Wraps `xcodebuild -downloadPlatform`. Downloads are large (5 to 10 GB) and stream progress. The version is checked against Apple's catalog first: `17` means 17.0, an already installed build is reported instead of re-downloaded, and an unknown version lists what is available.
 
 ```
 mirage runtime install <platform> [<version>]

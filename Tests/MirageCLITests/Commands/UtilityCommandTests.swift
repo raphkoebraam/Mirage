@@ -1,4 +1,5 @@
 import ArgumentParser
+import MirageKitTesting
 import Testing
 @testable import MirageCLI
 
@@ -202,8 +203,58 @@ struct AdvancedCommandTests {
         #expect(harness.ui.outputText == "runtime-table")
     }
 
-    @Test("runtime install downloads a platform runtime")
+    /// Stubs the catalog download and the installed-image listing that
+    /// `runtime install <platform> <version>` consults before xcodebuild.
+    private func stubCatalog() {
+        harness.runner.stub(stdout: RuntimeFixtures.downloadableIndexPlist)
+        harness.runner.stub(stdout: RuntimeFixtures.runtimeListJSON)
+    }
+
+    @Test("runtime install resolves the version against Apple's catalog, then downloads")
     func runtimeInstall() async throws {
+        stubCatalog()
+        harness.runner.stubInteractive(exitCode: 0)
+
+        // "27" means 27.0; the catalog's 27.0 entry is a release candidate.
+        try await harness.run(["runtime", "install", "iOS", "27"])
+
+        #expect(harness.runner.lastCommand?.arguments == [
+            "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "27.0",
+        ])
+        #expect(!harness.ui.successMessages.isEmpty)
+    }
+
+    @Test("runtime install lists what is available when the version is not in the catalog")
+    func runtimeInstallUnknownVersion() async throws {
+        stubCatalog()
+
+        let exit = try await harness.runExpectingExit(["runtime", "install", "iOS", "17"])
+
+        #expect(exit == ExitCode(1))
+        let message = try #require(harness.ui.errorMessages.first)
+        #expect(message.contains("iOS 17"))
+        #expect(message.contains("27.0"))
+        #expect(message.contains("26.5"))
+        #expect(message.contains("mirage runtime available"))
+        #expect(!harness.runner.executed.contains { $0.arguments.first == "xcodebuild" })
+    }
+
+    @Test("runtime install skips the download when the build is already installed")
+    func runtimeInstallAlreadyInstalled() async throws {
+        stubCatalog()
+
+        try await harness.run(["runtime", "install", "iOS", "26.5"])
+
+        #expect(!harness.runner.executed.contains { $0.arguments.first == "xcodebuild" })
+        #expect(harness.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("already installed") }
+            return false
+        })
+    }
+
+    @Test("runtime install falls back to xcodebuild when the catalog cannot be fetched")
+    func runtimeInstallOffline() async throws {
+        harness.runner.stub(stderr: "curl: (6) Could not resolve host", exitCode: 6)
         harness.runner.stubInteractive(exitCode: 0)
 
         try await harness.run(["runtime", "install", "iOS", "26.2"])
@@ -211,15 +262,16 @@ struct AdvancedCommandTests {
         #expect(harness.runner.lastCommand?.arguments == [
             "xcodebuild", "-downloadPlatform", "iOS", "-buildVersion", "26.2",
         ])
-        #expect(!harness.ui.successMessages.isEmpty)
+        #expect(harness.ui.events.contains { if case .warning = $0 { true } else { false } })
     }
 
-    @Test("runtime install normalizes platform casing and defaults to latest")
+    @Test("runtime install normalizes platform casing and defaults to latest without consulting the catalog")
     func runtimeInstallLatest() async throws {
         harness.runner.stubInteractive(exitCode: 0)
 
         try await harness.run(["runtime", "install", "ios"])
 
+        #expect(harness.runner.executed.count == 1)
         #expect(harness.runner.lastCommand?.arguments == ["xcodebuild", "-downloadPlatform", "iOS"])
     }
 

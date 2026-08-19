@@ -70,12 +70,12 @@ func requireCompatible(
 
 /// Order-preserving dedupe — some machines carry two runtime records for the
 /// same version (different builds), which would read as a stutter.
-private func uniqued(_ items: [String]) -> [String] {
+func uniqued(_ items: [String]) -> [String] {
     var seen = Set<String>()
     return items.filter { seen.insert($0).inserted }
 }
 
-private func capped(_ items: [String], limit: Int = 8) -> String {
+func capped(_ items: [String], limit: Int = 8) -> String {
     items.count <= limit
         ? items.joined(separator: ", ")
         : items.prefix(limit).joined(separator: ", ") + ", … (\(items.count - limit) more)"

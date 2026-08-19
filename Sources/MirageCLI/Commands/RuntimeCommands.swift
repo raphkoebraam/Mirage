@@ -130,7 +130,9 @@ struct RuntimeInstallCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "install",
         abstract: "Download and install a simulator runtime.",
-        discussion: "Wraps `xcodebuild -downloadPlatform`. Downloads are large (5–10 GB) and stream progress."
+        discussion: "Wraps `xcodebuild -downloadPlatform`. Downloads are large (5 to 10 GB) and stream progress. "
+            + "The version is checked against Apple's catalog first: `17` means 17.0, an already installed "
+            + "build is reported instead of re-downloaded, and an unknown version lists what is available."
     )
 
     enum Platform: String, CaseIterable {
@@ -162,13 +164,70 @@ struct RuntimeInstallCommand: AsyncParsableCommand {
             let ui = CLIRuntime.ui
             let normalized = Platform(matching: platform)!.rawValue
 
+            var buildVersion = version
+            if let version {
+                switch try resolve(version, platform: normalized, ui: ui) {
+                case let .download(resolvedVersion):
+                    buildVersion = resolvedVersion
+                case .alreadyInstalled:
+                    return
+                case .passThrough:
+                    break
+                }
+            }
+
             let code = try Xcodebuild(runner: CLIRuntime.runner)
-                .downloadPlatform(normalized, buildVersion: version)
+                .downloadPlatform(normalized, buildVersion: buildVersion)
             guard code == 0 else {
                 throw MirageCLIError("Runtime download failed (exit code \(code)).")
             }
-            ui.success("Installed \(normalized) \(version ?? "latest") runtime.")
+            ui.success("Installed \(normalized) \(buildVersion ?? "latest") runtime.")
         }
+    }
+
+    private enum Resolution {
+        case download(version: String)
+        case alreadyInstalled
+        case passThrough
+    }
+
+    /// Checks the requested version against Apple's catalog so a miss is
+    /// answered with what is available instead of xcodebuild's bare "not
+    /// available for download". Offline, the request goes through unchanged.
+    private func resolve(_ requested: String, platform: String, ui: any UserInterface) throws -> Resolution {
+        let catalog: RuntimeCatalog
+        do {
+            catalog = try RuntimeCatalogFetcher(runner: CLIRuntime.runner).fetch()
+        } catch let failure as CommandFailure {
+            ui.warning("Could not check Apple's runtime catalog (\(failure.description)); asking xcodebuild directly.")
+            return .passThrough
+        }
+
+        let offered = catalog.runtimes(platform: platform)
+        // Exact (modulo trailing zeros): "17" is 17.0. Newest build first.
+        if let match = offered.first(where: { DeviceResolver.versionsEqual($0.version, requested) }) {
+            let installed = try CLIRuntime.simctl.runtimeImages().map(\.build)
+            if installed.contains(match.build) {
+                ui.info("\(platform) \(match.version) (\(match.build)) is already installed.")
+                return .alreadyInstalled
+            }
+            return .download(version: match.version)
+        }
+
+        var lines = ["\(platform) \(requested) is not available for download."]
+        let releases = uniqued(offered.filter { !$0.isPrerelease }.map(\.version))
+        if !releases.isEmpty {
+            lines.append("Available \(platform) releases: \(capped(releases)).")
+        }
+        // Betas of versions that already shipped add nothing; show only
+        // pre-releases of versions with no release yet (e.g. the next major).
+        let prereleases = uniqued(offered.filter(\.isPrerelease).map(\.version))
+            .filter { !releases.contains($0) }
+        if !prereleases.isEmpty {
+            lines.append("Pre-releases: \(capped(prereleases)).")
+        }
+        lines.append("See `mirage runtime available --platform \(platform)`.")
+        throw MirageCLIError(lines.joined(separator: "\n"))
     }
 }
 
