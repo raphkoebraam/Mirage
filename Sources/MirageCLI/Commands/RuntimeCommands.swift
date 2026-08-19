@@ -1,4 +1,5 @@
 import ArgumentParser
+import Foundation
 import MirageKit
 
 struct RuntimeCommand: AsyncParsableCommand {
@@ -7,6 +8,7 @@ struct RuntimeCommand: AsyncParsableCommand {
         abstract: "Manage runtime disk images.",
         subcommands: [
             RuntimeListCommand.self,
+            RuntimeAvailableCommand.self,
             RuntimeInstallCommand.self,
             RuntimeDeleteCommand.self,
         ]
@@ -23,6 +25,104 @@ struct RuntimeListCommand: AsyncParsableCommand {
         try await withErrorPresentation {
             try CLIRuntime.ui.output(CLIRuntime.simctl.runtimeList())
         }
+    }
+}
+
+struct RuntimeAvailableCommand: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        commandName: "available",
+        abstract: "List simulator runtimes Apple offers for download.",
+        discussion: """
+        Reads the same catalog Xcode's Components pane uses and marks the \
+        builds already installed. Install one with `mirage runtime install`.
+        """
+    )
+
+    @Option(name: .long, help: "Only this platform: iOS, watchOS, tvOS, or visionOS.")
+    var platform: String?
+
+    @Flag(name: .long, help: "Include betas and release candidates.")
+    var prerelease = false
+
+    @Flag(name: .long, help: "Emit JSON instead of a table.")
+    var json = false
+
+    func validate() throws {
+        if let platform, RuntimeInstallCommand.Platform(matching: platform) == nil {
+            throw ValidationError(
+                "Unknown platform '\(platform)'. Use iOS, watchOS, tvOS, or visionOS."
+            )
+        }
+    }
+
+    private struct Entry: Encodable {
+        let platform: String
+        let version: String
+        let build: String
+        let name: String
+        let fileSize: Int64
+        let isPrerelease: Bool
+        let installed: Bool
+    }
+
+    func run() async throws {
+        try await withErrorPresentation {
+            let ui = CLIRuntime.ui
+
+            let catalog: RuntimeCatalog
+            do {
+                catalog = try RuntimeCatalogFetcher(runner: CLIRuntime.runner).fetch()
+            } catch let failure as CommandFailure {
+                throw MirageCLIError("Could not download Apple's runtime catalog: \(failure.description)")
+            }
+            let installedBuilds = try Set(CLIRuntime.simctl.runtimeImages().map(\.build))
+
+            var runtimes = platform.map { catalog.runtimes(platform: $0) } ?? catalog.runtimes
+            if !prerelease {
+                runtimes = runtimes.filter { !$0.isPrerelease }
+            }
+
+            let entries = runtimes.map { runtime in
+                Entry(
+                    platform: runtime.platform,
+                    version: runtime.version,
+                    build: runtime.build,
+                    name: runtime.name,
+                    fileSize: runtime.fileSize,
+                    isPrerelease: runtime.isPrerelease,
+                    installed: installedBuilds.contains(runtime.build)
+                )
+            }
+
+            if json {
+                try ui.output(prettyJSON(entries))
+                return
+            }
+
+            ui.table(
+                headers: ["Platform", "Version", "Build", "Size", "Status"],
+                rows: entries.map { entry in
+                    [
+                        entry.platform,
+                        entry.isPrerelease ? "\(entry.version) (\(prereleaseLabel(entry.name)))" : entry.version,
+                        entry.build,
+                        formatBytes(entry.fileSize),
+                        entry.installed ? "installed" : "available",
+                    ]
+                }
+            )
+            ui.info("Install one with `mirage runtime install <platform> <version>`.")
+        }
+    }
+
+    /// "iOS 26.5 beta 4 Simulator Runtime" -> "beta 4".
+    private func prereleaseLabel(_ name: String) -> String {
+        let stripped = name
+            .replacingOccurrences(of: " Simulator Runtime", with: "")
+            .split(separator: " ")
+            .dropFirst(2)
+            .joined(separator: " ")
+        return stripped.isEmpty ? "prerelease" : stripped
     }
 }
 
