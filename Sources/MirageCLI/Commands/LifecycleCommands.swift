@@ -194,6 +194,7 @@ struct CreateCommand: AsyncParsableCommand {
 
             ui.success("Created \(name) (\(deviceType.name), \(resolvedRuntime.name)).")
             ui.output(udid)
+            hintAboutXcodeDestinations(ui)
 
             if boot {
                 try await ui.progress("Booting \(name)", successMessage: nil) {

@@ -26,6 +26,37 @@ struct CleanupCommandTests {
         #expect(!harness.ui.successMessages.isEmpty)
     }
 
+    @Test("after deleting, an interactive run points at Xcode's destination settings")
+    func xcodeHintInteractive() async throws {
+        harness.stubInventory()
+        harness.ui.answerConfirm(true)
+
+        try await harness.run(["cleanup"])
+
+        #expect(harness.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("Manage Run Destinations") }
+            return false
+        })
+    }
+
+    @Test("the Xcode hint is skipped non-interactively and on dry runs")
+    func xcodeHintSkipped() async throws {
+        let quiet = CLIHarness(isInteractive: false)
+        quiet.stubInventory()
+        try await quiet.run(["cleanup", "--yes"])
+        #expect(!quiet.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("Manage Run Destinations") }
+            return false
+        })
+
+        harness.stubInventory()
+        try await harness.run(["cleanup", "--dry-run"])
+        #expect(!harness.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("Manage Run Destinations") }
+            return false
+        })
+    }
+
     @Test("--dry-run reports without deleting")
     func dryRun() async throws {
         harness.stubInventory()

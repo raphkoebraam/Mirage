@@ -106,6 +106,25 @@ struct CreateCloneDeleteRenameTests {
         #expect(harness.ui.outputText.contains("NEW-UDID"))
     }
 
+    @Test("create tells interactive users how to surface the device in Xcode")
+    func createXcodeHint() async throws {
+        harness.stubInventory()
+        harness.runner.stub(stdout: "NEW-UDID\n")
+
+        try await harness.run(["create", "My Phone", "--type", "iphone 17 pro"])
+
+        #expect(harness.ui.events.contains { event in
+            if case let .info(message) = event { return message.contains("Manage Run Destinations") }
+            return false
+        })
+
+        let quiet = CLIHarness(isInteractive: false)
+        quiet.stubInventory()
+        quiet.runner.stub(stdout: "NEW-UDID\n")
+        try await quiet.run(["create", "My Phone", "--type", "iphone 17 pro"])
+        #expect(!quiet.ui.events.contains { if case .info = $0 { true } else { false } })
+    }
+
     @Test("create accepts an explicit runtime version")
     func createWithRuntime() async throws {
         harness.stubInventory()

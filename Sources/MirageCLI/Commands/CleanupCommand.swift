@@ -82,6 +82,9 @@ struct CleanupCommand: AsyncParsableCommand {
                     "Deleted \(plan.entries.count) simulator(s), reclaimed about "
                         + "\(formatBytes(plan.totalReclaimableBytes))."
                 )
+                if plan.entries.contains(where: { if case .duplicate = $0.reason { true } else { false } }) {
+                    hintAboutXcodeDestinations(ui)
+                }
             }
 
             if let imagesNotUsedSince {
