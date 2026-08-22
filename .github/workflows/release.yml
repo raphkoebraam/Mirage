@@ -6,6 +6,10 @@ on:
 
 permissions:
   contents: write
+  # Build provenance (SLSA) for the release tarball; mise's github backend
+  # verifies it when present.
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -103,6 +107,11 @@ jobs:
             echo "No CHANGELOG entry for $VERSION; falling back to generated notes."
             echo "NOTES_ARGS=--generate-notes" >> "$GITHUB_ENV"
           fi
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: mirage-${{ steps.package.outputs.version }}-macos.tar.gz
 
       - name: Create GitHub Release
         env:
