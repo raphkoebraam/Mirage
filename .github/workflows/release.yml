@@ -20,6 +20,8 @@ jobs:
       sha256: ${{ steps.package.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # pre-release tags are needed for the promotion check
 
       # The tag is the single source of truth for the version: nothing in the
       # tree has to change to cut a release, and promoting a pre-release is
@@ -50,6 +52,26 @@ jobs:
             echo "$GITHUB_REF_NAME signature not verified by GitHub ($REASON)." >&2
             exit 1
           fi
+
+      # A stable tag promotes the latest pre-release of the same version: the
+      # code must be what the beta tested. Only CHANGELOG.md and docs/ may
+      # differ. Versions that never had a pre-release pass unchanged.
+      - name: Verify stable tag promotes the latest pre-release
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          case "$VERSION" in *-*) echo "Pre-release; nothing to promote."; exit 0 ;; esac
+          LATEST_BETA=$(git tag --list "v$VERSION-*" --sort=-version:refname | head -n 1)
+          if [ -z "$LATEST_BETA" ]; then
+            echo "No pre-release for $VERSION; releasing directly."
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$LATEST_BETA" "$GITHUB_REF_NAME" -- . ':!CHANGELOG.md' ':!docs/')
+          if [ -n "$CHANGED" ]; then
+            echo "$GITHUB_REF_NAME differs from $LATEST_BETA beyond CHANGELOG.md/docs; cut another pre-release first:" >&2
+            echo "$CHANGED" >&2
+            exit 1
+          fi
+          echo "$GITHUB_REF_NAME promotes $LATEST_BETA ($(git rev-parse --short "$LATEST_BETA"))."
 
       - name: Stamp version from tag
         run: |
