@@ -32,6 +32,25 @@ jobs:
             exit 1
           fi
 
+      # Only a signed, GitHub-verified annotated tag can publish. A bare
+      # lightweight tag (or one signed with an unregistered key) is rejected.
+      - name: Verify tag signature
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TYPE=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq '.object.type')
+          if [ "$TYPE" != "tag" ]; then
+            echo "$GITHUB_REF_NAME is a lightweight tag; create it with git tag -s." >&2
+            exit 1
+          fi
+          SHA=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq '.object.sha')
+          VERIFIED=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$SHA" --jq '.verification.verified')
+          REASON=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$SHA" --jq '.verification.reason')
+          if [ "$VERIFIED" != "true" ]; then
+            echo "$GITHUB_REF_NAME signature not verified by GitHub ($REASON)." >&2
+            exit 1
+          fi
+
       - name: Stamp version from tag
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
