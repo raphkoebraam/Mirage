@@ -17,15 +17,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify tag matches MirageVersion
+      # The tag is the single source of truth for the version: nothing in the
+      # tree has to change to cut a release, and promoting a pre-release is
+      # just a second tag on the same commit.
+      - name: Verify tag is SemVer
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          SOURCE_VERSION=$(sed -n 's/.*static let current = "\(.*\)".*/\1/p' \
-            Sources/MirageKit/MirageVersion.swift)
-          if [ "$TAG_VERSION" != "$SOURCE_VERSION" ]; then
-            echo "Tag $TAG_VERSION does not match MirageVersion.current ($SOURCE_VERSION)." >&2
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
+            echo "Tag $GITHUB_REF_NAME is not a SemVer version." >&2
             exit 1
           fi
+
+      - name: Stamp version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i '' -E "s/(static let current = \")[^\"]*(\")/\1$VERSION\2/" \
+            Sources/MirageKit/MirageVersion.swift
+          grep -q "\"$VERSION\"" Sources/MirageKit/MirageVersion.swift
 
       - uses: jdx/mise-action@v2
       - run: tuist install
@@ -49,6 +57,15 @@ jobs:
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO | tail -20
           lipo -info build/Build/Products/Release/mirage
 
+      - name: Verify binary reports the tag version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          REPORTED=$(build/Build/Products/Release/mirage --version)
+          if [ "$REPORTED" != "$VERSION" ]; then
+            echo "Binary reports $REPORTED, expected $VERSION." >&2
+            exit 1
+          fi
+
       - name: Package
         id: package
         run: |
@@ -62,17 +79,24 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "sha256=$(shasum -a 256 "mirage-$VERSION-macos.tar.gz" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      # Prefer the hand-written CHANGELOG section; fall back to generated notes
-      # when the version has no entry yet.
+      # Prefer the hand-written CHANGELOG section. A pre-release normally has
+      # no section of its own, so it takes the Unreleased section instead; only
+      # when neither has content do the notes fall back to being generated.
       - name: Release notes
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          awk -v v="$VERSION" '
-            $0 ~ "^## \\[" v "\\]" { capture = 1; next }
-            capture && /^## / { exit }
-            capture && /^\[.*\]: http/ { next }   # link definitions render as nothing
-            capture { print }
-          ' CHANGELOG.md > notes.md
+          section() {
+            awk -v v="$1" '
+              $0 ~ "^## \\[" v "\\]" { capture = 1; next }
+              capture && /^## / { exit }
+              capture && /^\[.*\]: http/ { next }   # link definitions render as nothing
+              capture { print }
+            ' CHANGELOG.md
+          }
+          section "$VERSION" > notes.md
+          case "$VERSION" in
+            *-*) grep -q '[^[:space:]]' notes.md || section "Unreleased" > notes.md ;;
+          esac
           if grep -q '[^[:space:]]' notes.md; then
             echo "NOTES_ARGS=--notes-file notes.md" >> "$GITHUB_ENV"
           else

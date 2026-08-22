@@ -8,15 +8,21 @@ description = "Resolve dependencies and generate the Xcode workspace"
 run = "tuist install && tuist generate --no-open"
 
 [tasks.build]
-description = "Release build; binary lands in bin/mirage"
-run = """
+description = "Release build stamped from git describe; binary lands in bin/mirage"
+run = '''
+set -e
+FILE=Sources/MirageKit/MirageVersion.swift
+VERSION=$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//')
+cp "$FILE" "$FILE.orig"
+trap 'mv "$FILE.orig" "$FILE"' EXIT
+sed -i '' -E "s/(static let current = \")[^\"]*(\")/\1${VERSION:-0.0.0-dev}\2/" "$FILE"
 xcodebuild build -workspace Mirage.xcworkspace -scheme mirage \
   -configuration Release -destination platform=macOS \
   -derivedDataPath build -quiet
 mkdir -p bin
 cp build/Build/Products/Release/mirage bin/mirage
-echo "bin/mirage"
-"""
+echo "bin/mirage ($(bin/mirage --version))"
+'''
 
 [tasks.test]
 description = "Run both test suites"
